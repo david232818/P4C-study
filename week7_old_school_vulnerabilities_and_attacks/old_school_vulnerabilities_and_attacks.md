@@ -20,12 +20,13 @@ Contents
  
 ## 변수가 스택에 배치되는 순서
  [6]은 하위 연산 (subsidiary operation)을 시작하고자 할 때 상위 연산 (major operation)으로부터 벗어나고, 하위 연산이 종료되었을 때 상위 연산을 계속 진행하는 방법을 설명하기 위해 상위 연산 탈출 지점 등이 적힌 노트인 딜레이 라인 (delay lines)을 제시한다. 그리고 가장 최근의 노트를 가리키는 것으로 TS를 두며 이는 하위 연산이 실행되고 종료됨에 따라 수정된다고 설명한다. 이때 수정의 방법은 하위 연산이 실행될 때 노트에 탈출 지점을 적고 (burying), 하위 연산이 종료될 때 노트에서 탈출 지점을 없애는 (disinterring) 것으로, 상기의 두 동작을 수행하는 명령어를 각각 BURY, UNBURY로 정의한다. [6]이 설명하는 개념과 동작은 현대의 스택과 크게 다르지 않고, 이들을 현대 스택에 비추어보면 딜레이 라인이 스택 메모리에 대응되고, TS가 스택 포인터에 대응되며, BURY, UNBURY는 각각 PUSH, POP에 대응됨을 알 수 있다.
- 
+
+```
 Delay Line: [ Note1 ][ Note2 ][ Note3 ] ...
             ^
-		    |
+			|
             +--TS
- 
+ ```
  
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
