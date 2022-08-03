@@ -24,7 +24,7 @@ Contents
 ```
 Delay Line: [ Note1 ][ Note2 ][ Note3 ] ...
             ^
-			|
+            |
             +--TS
  ```
  
