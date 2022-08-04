@@ -26,6 +26,19 @@ Delay Line: [ Note1 ][ Note2 ][ Note3 ] ...
             ^
             |
             +--TS
+			
+BURY:
+    Delay Line: [ New Note ][ Note1 ][ Note2 ][ Note3 ] ...
+                ^
+                |
+                +--TS
+
+UNBURY:
+    Delay Line: [ Note1 ][ Note2 ][ Note3 ] ...
+                ^
+                |
+                +--TS
+    Disintered: [ New Note ]+
 ```
  
 이렇게 마지막에 들어간 것이 첫 번째로 나오는 형태를 후입선출 (Last In First Out, LIFO)이라고 부르고, 스택은 대표적인 후입선출 자료구조이다.
