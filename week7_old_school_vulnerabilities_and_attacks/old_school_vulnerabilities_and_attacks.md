@@ -86,7 +86,6 @@ int main()
  [9, p. 36]은 다음과 같은 표준 스택 프레임을 제시한다.
  
 ```
-======================================================
 Position         Contents          Frame
 --------------+-----------------+---------- High address
 4n + 8 (%ebp) | argument word n | Previous
@@ -102,8 +101,29 @@ Position         Contents          Frame
  ...          | ...             |
 0 (%esp)      | variable size   |
 --------------+-----------------+---------- Low address
-======================================================
 ```
+
+그리고 [9, pp. 39 - 40]는 함수 프롤로그와 에필로그의 예시를 제시한다.
+
+```
+prologue:
+	push %ebp		/ save frame pointer
+	movl %esp, %ebp	/save new frame pointer
+	subl $80, %esp	/ allocate stack space
+	pushl %edi		/ save local register
+	pushl %esi		/ save local register
+	pushl %ebx		/ save local register
+	movl %edi, %eax	/ set up return value
+```
+
+```
+epilogue:
+	popl %ebx	/ restore local register
+	popl %esi	/ restore local register
+	popl %edi	/ restore local register
+	leave		/ restore frame pointer
+	ret 		/ pop return address
+```	
 
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
