@@ -143,6 +143,56 @@ epilogue:
 @ 위 그림에서 대괄호 사이에 위치한 알파벳 문자 하나는 1 바이트를 의미함
 ```
 
+위와 같은 스택에서 사용자가 다음과 같은 입력을 주어서
+
+```
+["AAAAAAAAAAAA"]["AAAA"][JJJJ][SSSSSSSS...]
+
+@ J: Address of jmp %esp
+@ S: Shell Code
+
+@ 위 그림에서 대괄호 사이에 위치한, 큰따옴표로 묶이지 않은 알파벳 문자 하나는 1 바이트를 의미함
+```
+
+스택이 다음과 같은 상태로
+
+```
+(LOW) ... ["AAAAAAAAAAAA"]["AAAA"][JJJJ][SSSSSSSS...] ... (HIGH)
+```
+
+존재하는 상황을 생각해보자. 이 상황에서 함수 에필로그가 진행되는 것을 살펴보면 다음과 같다.
+
+```
+1. mov %ebp, %esp
+(LOW) ... ["AAAAAAAAAAAA"]["AAAA"][JJJJ][SSSSSSSS...] ... (HIGH)
+                          ^
+                          |
+                          +---%esp, %ebp
+
+2. pop %ebp
+(LOW) ... ["AAAAAAAAAAAA"]["AAAA"][JJJJ][SSSSSSSS...] ... (HIGH)
+                                  ^
+                                  |
+                                  +---%esp
+                                      %ebp = 0x41414141
+									  
+3. ret
+(LOW) ... ["AAAAAAAAAAAA"]["AAAA"][JJJJ][SSSSSSSS...] ... (HIGH)
+                                        ^
+                                        |
+                                        +---%esp
+                                            %ebp = 0x41414141
+                                            %eip = {JJJJ}
+											
+@ J: Address of jmp %esp
+@ S: Shell Code
+
+@ 위 그림에서 대괄호 사이에 위치한, 큰따옴표로 묶이지 않은 알파벳 문자 하나는 1 바이트를 의미함
+@ 위 그림에서 중괄호는 중괄호로 묶인 것의 주소를 의미함
+```	
+
+
+
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
 
