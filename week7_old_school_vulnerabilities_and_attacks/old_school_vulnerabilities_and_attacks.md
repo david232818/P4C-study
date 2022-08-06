@@ -80,6 +80,21 @@ int main()
 
  앞의 예시는 스택 배치가 가정한대로 구성되어야만 성립한다. 하지만 이전에 설명했듯이 스택 배치의 구성은 컴파일러가 관심가지는 사항이고, 컴파일러마다 다르기 때문에 위에서 가정한대로 스택 배치를 구성하는 컴파일러로 컴파일된 프로그램에서만 성립하게 된다. 이렇게 (특정 컴파일러상에서만 성립함에도) 사용자 입력을 받는 변수가 실행 흐름에 관여하는 변수의 앞에 배치되어 발생하는 문제는 [8]이 해결책을 제시하여 일부 해결되었다. 여기서 [8]이 제시한 해결책은 지역변수의 배치 순서를 조정하는, 즉 사용자 입력을 받아들이는 변수가 다른 변수의 뒤에 위치하도록 만드는 SSP (Stack Smashing Protector)이다. 그리고 현대의 컴파일러 대부분은 이 기능을 제공한다. 그래서 위 예시 코드를 컴파일하고 실행시켜서 오버플로우 공격을 수행해도 원하는 결과가 나오지 않을 수 있다.
  
+```bash
+$gcc -fno-stack-protector ex1_stack_BOF.c -o ex1_stack_BOF
+ex1_stack_BOF.c: In function ‘main’:
+ex1_stack_BOF.c:9:5: warning: implicit declaration of function ‘gets’; did you mean ‘fgets’? [-Wimplicit-function-declaration]
+    9 |     gets(A);
+      |     ^~~~
+      |     fgets
+/usr/bin/ld: /tmp/ccoWwIX1.o: in function `main':
+ex1_stack_BOF.c:(.text+0x19): warning: the `gets' function is dangerous and should not be used.
+$ ./ex1_stack_BOF
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Access Denied..
+Segmentation fault (core dumped)
+$
+```
 ## 쉘코드로 점프하기
 
 ### 스택 프레임
@@ -182,16 +197,30 @@ epilogue:
                                         |
                                         +---%esp
                                             %ebp = 0x41414141
-                                            %eip = {JJJJ}
+                                            %eip = JJJJ
 											
 @ J: Address of jmp %esp
 @ S: Shell Code
 
 @ 위 그림에서 대괄호 사이에 위치한, 큰따옴표로 묶이지 않은 알파벳 문자 하나는 1 바이트를 의미함
-@ 위 그림에서 중괄호는 중괄호로 묶인 것의 주소를 의미함
 ```	
 
+위 진행 결과를 보면 %eip가 %esp로 점프하는 명령어의 주소를 가지게 됨을 알 수 있다. 이때 %esp에는 쉘 코드가 저장되어 있으므로 쉘 코드가 실행될 것이다.
 
+ 그럼 위 예시가 어떻게 코드상에서 구현되는지 살펴보자. 먼저 다음과 같은 C 코드를 가정하자.
+ 
+```C
+#include <stdio.h>
+
+/* gcc -fno-stack-protector -no-pie ex2_stack_BOF.c -o ex2_stack_BOF */
+int main()
+{
+	char buf[12];
+	
+	gets(buf);
+	return 0;
+}
+```
 
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
