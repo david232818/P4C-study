@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
+/* gcc -fno-stack-protector ex1_stack_BOF.c -o ex1_stack_BOF */
 int main()
 {
     char A[12];
     int B;
 
-    gets(A);
     B = 0;
+    gets(A);
     if (strcmp(A, "Password") == 0)
 	B = 1;
 

@@ -81,7 +81,7 @@ int main()
  앞의 예시는 스택 배치가 가정한대로 구성되어야만 성립한다. 하지만 이전에 설명했듯이 스택 배치의 구성은 컴파일러가 관심가지는 사항이고, 컴파일러마다 다르기 때문에 위에서 가정한대로 스택 배치를 구성하는 컴파일러로 컴파일된 프로그램에서만 성립하게 된다. 이렇게 (특정 컴파일러상에서만 성립함에도) 사용자 입력을 받는 변수가 실행 흐름에 관여하는 변수의 앞에 배치되어 발생하는 문제는 [8]이 해결책을 제시하여 일부 해결되었다. 여기서 [8]이 제시한 해결책은 지역변수의 배치 순서를 조정하는, 즉 사용자 입력을 받아들이는 변수가 다른 변수의 뒤에 위치하도록 만드는 SSP (Stack Smashing Protector)이다. 그리고 현대의 컴파일러 대부분은 이 기능을 제공한다. 그래서 위 예시 코드를 컴파일하고 실행시켜서 오버플로우 공격을 수행해도 원하는 결과가 나오지 않을 수 있다.
  
 ```bash
-$gcc -fno-stack-protector ex1_stack_BOF.c -o ex1_stack_BOF
+$ gcc -fno-stack-protector ex1_stack_BOF.c -o ex1_stack_BOF
 ex1_stack_BOF.c: In function ‘main’:
 ex1_stack_BOF.c:9:5: warning: implicit declaration of function ‘gets’; did you mean ‘fgets’? [-Wimplicit-function-declaration]
     9 |     gets(A);
@@ -90,11 +90,12 @@ ex1_stack_BOF.c:9:5: warning: implicit declaration of function ‘gets’; did y
 /usr/bin/ld: /tmp/ccoWwIX1.o: in function `main':
 ex1_stack_BOF.c:(.text+0x19): warning: the `gets' function is dangerous and should not be used.
 $ ./ex1_stack_BOF
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-Access Denied..
+AAAAAAAAAAAAAAAAAAAAAAAAAA
+Access Granted..
 Segmentation fault (core dumped)
 $
 ```
+
 ## 쉘코드로 점프하기
 
 ### 스택 프레임
