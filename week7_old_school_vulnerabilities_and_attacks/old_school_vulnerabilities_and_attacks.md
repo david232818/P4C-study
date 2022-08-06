@@ -139,6 +139,8 @@ epilogue:
 @ F: Saved Frame Pointer
 @ R: Return Address
 @ S: Shell Code
+
+@ 위 그림에서 대괄호 사이에 위치한 알파벳 문자 하나는 1 바이트를 의미함
 ```
 
 # References
