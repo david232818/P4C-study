@@ -234,7 +234,7 @@ $ gcc -fno-stack-protector -no-pie -z execstack ex2_stack_BOF.c -o ex2_stack_BOF
 
 위 결과를 통해 입력 버퍼와 리턴 주소의 거리가 0xc + 0x8 = 0x14 (바이트)임을 알 수 있다. 이제 %esp로 점프하는 코드의 주소와 쉘 코드가 필요하다. 먼저 %esp로 점프하는 코드의 주소부터 찾아보자. %esp로 점프하는 어셈블리어 코드를 찾는 방법은 그에 해당하는 기계어 코드를 실행파일에서 검색하는 것이다. 그리고 그 기계어를 찾는 좋은 방법은 다음과 같이 C 코드에 어셈블리어 코드를 포함시키는 구문을 사용하여 컴파일하고 objdump와 같은 명령어로 확인하는 것이다. 다만, 위의 예시는 32 비트 시스템을 가정했기 때문에 %esp라고 표기했지만, 64 비트 시스템에서 컴파일할 경우에는 %rsp로 써주어야 한다.
 
-```
+```C
 /* gcc ex2_find_machine_code.c -o ex2_find_machine_code */
 int main()
 {
