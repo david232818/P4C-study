@@ -235,7 +235,17 @@ $ objdump -D ./ex2_find_machine_code | grep -A10 main | tail -n 11
 $
 ```
 
-위 결과로부터 "ff e4"가 %esp로 점프하는 코드의 기계어임을 알 수 있다.
+위 결과로부터 "ff e4"가 %esp로 점프하는 코드의 기계어임을 알 수 있다. 이 기계어 코드를 실행파일에서 검색한 예시는 다음과 같다.
+
+```bash
+$ objdump -D ./example_jmp_to_esp | grep "ff e4"
+ 8048756:       3d ff e4 00 00          cmp    $0xe4ff,%eax
+$
+```
+
+위 예시에는 "jmp *%esp"라는 명령어는 없다. 다만, "ff e4"를 포함하는 명령어가 있을 뿐이다. 이때, 0x8048756부터가 아니라 0x8048757부터 본다면 CPU는 "ff e4"를 인식하게 된다. 따라서 %esp로 점프하는 명령어의 주소는 0x8048757이 된다.
+
+ 
 
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
