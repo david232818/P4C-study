@@ -11,6 +11,8 @@ Contents
 	  2. 쉘코드로 점프하는 방법
    3. NOP Sled
 2. 형식 문자열 버그
+   1. x86과 x64 시스템에서의 printf 함수
+   2. 형식 문자열 취약점
 3. 메모리 쓰기 프리미티브
 4. References
 
@@ -294,19 +296,28 @@ $
 
 ```
 +--------------+
-|     AAAA     | -> printf("AAAA");
+|     AAAA     |                         -> printf("AAAA");
 +--------------+    +--------------+
-|     /%lx     | -> | 7ffc36f4edf8 | -> printf("/%lx", 0x7ffc36f4edf8);
+|     /%lx     | -> | 7ffc36f4edf8 |     -> printf("/%lx", 0x7ffc36f4edf8);
 +--------------+    +--------------+
-|     ...      |
+|     ...      |                            ...
 +--------------+    +------------------+
 |     /%lx     | -> | 41414141006e6c75 | -> printf("/%lx", 0x41414141006e6c75);
 +--------------+    +------------------+
 |     /%lx     | -> | 786c252f786c252f | -> printf("/%lx", 0x786c252f786c252f);
 +--------------+    +------------------+
-|     ...      |
+|     ...      |                            ...
 +--------------+
 ```
+
+위 결과로부터 형식 문자열 버그를 통해 printf 함수에 전달한 문자열을 특정 형식 지정자로 출력할 수 있음을 알 수 있다. 즉, %s를 통해 해당 메모리 주소의 내용을 읽는 것도, %n을 통해 해당 메모리 주소에 값을 쓰는 것도 (메모리 주소가 유효하다면) 가능하다는 것이다. 이러한 임의 주소 쓰기가 사용되는 대표적인 곳이 동적으로 링크되느 라이브러리 함수들의 절대 주소가 저장되는 전역 오프셋 테이블 (Global Offset Table, GOT)이다.
+
+# 메모리 쓰기 프리미티브
+ 메모리 쓰기 프리미티브의 용법은 [13]의 다음과 같은 설명에서 찾을 수 있다.
+ 
+> I like to call this a write-anything-anywhere primitive, and the trick described here can be used whenever you have a write-anything-anywhere primitive,  be it a format string, an overflow over the "destination pointer of a strcpy()", several free()s in a row, a ret2memcpy buffer overflow, etc.
+
+여기서 프리미티브 (primitive)의 용법을 살펴보면 '요소'의 의미로 사용되었음을 알 수 있다. 즉, 메모리 쓰기 프리미티브란 메모리에 쓸 수 있도록 만드는 프로그램 요소를 말하는 것이다. 따라서 1에서는 오버플로우를 허용하는 취약한 함수에 전달되고, 스택에 존재하는 인자가 메모리 쓰기 프리미티브가 되고, 2에서는 형식 문자열이 메모리 쓰기 프리미티브가 되는 것이다.
 
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
