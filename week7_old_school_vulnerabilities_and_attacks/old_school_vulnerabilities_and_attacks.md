@@ -253,6 +253,34 @@ $
 ## NOP Sled
 
 # 형식 문자열 버그
+ [11]은 csh를 테스트하던 도중 printf 함수가 인자 (parameter)를 기대하는 상황에서 아무것도 제공되지 않을 때 에러를 발생시킬 수 있음을 확인하였다. 그리고 이는 printf 함수를 사용하는 에러 핸들링 함수에 전달되는 문자열로 인해 발생할 수 있고 이를 해결하기 위한 방법으로 printf 함수가 아닌 puts 함수를 사용할 것을 제안하였다.
+
+## x86과 x64 시스템에서의 printf 함수
+ [10]은 printf 함수 계열이 형식 (format)에 따른 출력을 생성함을 설명하면서 %로 시작하는 문자인 형식 지정자 (conversion specifier)에 의해 문자열 뒤의 인자 (arguments)를 해석하여 배치함을 기술하고 있다.
+ 
+ 여기서 [11]의 설명과 같이 형식 지정자의 개수와 인자 (arguments)의 개수가 일치하지 않을 때 문제가 발생한다. [9, 12]는 함수호출규약 (Function Calling Convention)의 차이로 인해 x86 시스템은 스택을 사용하여 가변 인자 (variable arguments)를 구현하고, x64 시스템의 경우에는 인자의 클래스를 나누어 인자를 레지스터 또는 스택에 적절히 배치하는 방법으로 가변 인자를 구현해야 함을 보였다. 그러나 현 상황과 같이 형식 지정자의 개수가 인자 (arguments)의 개수보다 많을 때, 그 초과분에 대해서는 x86과 x64의 동작이 같아지게 된다. 그 이유는 [12]가 설명하듯이 레지스터로 인자를 전달하는 경우에는 그 인자의 타입을 해석할 수 있어야 적절한 레지스터에 저장하여 전달할 수 있는데 현 상황의 경우에는 초과분에 한해 그렇지 못하기 때문이다. 따라서 스택으로부터 데이터를 읽어들이게 되고 결국 x86에서의 동작과 같아진다.
+
+## 형식 문자열 취약점
+ 형식 문자열 취약점 (Format String Vulnerability)은 다음과 같이 printf 함수를 마치 puts 함수처럼 사용할 때 발생한다. 먼저 다음과 같은 코드를 가정해보자.
+ 
+```C
+/* ex3_fmt_string_vuln.c */
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+	printf(argv[1]);
+	return 0;
+}
+```
+
+그리고 다음과 같이 인자를 주어 실행하면 이상한 결과를 얻는다.
+
+```bash
+$ ./ex3_fmt_string_vuln %p/%p/
+0x7ffc66290c78/0x7ffc66290c90/
+$
+```
 
 # References
 [1] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming languages -- C", ISO/IEC, 1999
