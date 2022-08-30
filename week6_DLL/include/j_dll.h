@@ -69,4 +69,13 @@ extern int j_dll_create(j_dll_t *dll, void *data);
 /* j_dll_read: print data in dll */
 extern int j_dll_read(j_dll_t *dll);
 
+/* j_dll_update: update node data, origin to new */
+extern int j_dll_update(j_dll_t *dll, void *origin, void *new);
+
+/* j_dll_delete: delete node from dll */
+extern int j_dll_delete(j_dll_t *dll, void *delete_data);
+
+/* j_dll_search: search node by given data */
+extern struct j_dllnode *j_dll_search(j_dll_t *dll, void *search_data);
+
 #endif

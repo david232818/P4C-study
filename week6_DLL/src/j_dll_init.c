@@ -19,6 +19,9 @@ j_dll_t *j_dll_init(j_dll_method_t rm,
     J_IF_GOTO_THEN_ELS(um,NULL,ERROR,j_dll_mtable(dll, UPDATE)->method,um);
     dll->create = j_dll_create;
     dll->read = j_dll_read;
+    dll->update = j_dll_update;
+    dll->delete = j_dll_delete;
+    dll->search = j_dll_search;
     return dll;
 
 ERROR:

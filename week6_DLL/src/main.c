@@ -12,7 +12,8 @@ int update_method(void *, void *);
 int main()
 {
     j_dll_t *list;
-    int *tmpdata;
+    struct j_dllnode *searched;
+    int *tmpdata, searchdata, origin;
 
     if ((list = j_dll_init(read_method,
 			  compare_method,
@@ -21,17 +22,52 @@ int main()
     printf("list init successful..\n");
 
     tmpdata = malloc(sizeof(int));
-    *tmpdata = 2;
-    list->create(list, tmpdata);
+    *tmpdata = 12;
+    if (list->create(list, tmpdata) == -1)
+	return -1;
 
     tmpdata = malloc(sizeof(int));
     *tmpdata = 10;
-    list->create(list, tmpdata);
+    if (list->create(list, tmpdata) == -1)
+	return -1;
  
     tmpdata = malloc(sizeof(int));
-    *tmpdata = 6;
-    list->create(list, tmpdata);
+    *tmpdata = 24;
+    if (list->create(list, tmpdata) == -1)
+	return -1;
 
+    tmpdata = malloc(sizeof(int));
+    *tmpdata = 23;
+    if (list->create(list, tmpdata) == -1)
+	return -1;
+
+    tmpdata = malloc(sizeof(int));
+    *tmpdata = 100;
+    if (list->create(list, tmpdata) == -1)
+	return -1;
+
+    printf("node count: %zu\n", j_dll_cnt(list));
+    list->read(list);
+
+    searchdata = 12;
+    if ((searched = list->search(list, &searchdata)) == NULL)
+	printf("Not found..\n");
+    printf("found: %d\n", deref_data(j_dllnode_data(searched), int));
+
+    if (list->delete(list, &searchdata) == -1)
+	printf("Not deleted..\n");
+    printf("deleted..\n");
+
+    printf("node count: %zu\n", j_dll_cnt(list));
+    list->read(list);
+
+    origin = 24;
+    searchdata = 9;
+    if (list->update(list, &origin, &searchdata) == -1)
+	printf("Not updated..\n");
+    printf("update successful..\n");
+
+    printf("node count: %zu\n", j_dll_cnt(list));
     list->read(list);
     return 0;
 }

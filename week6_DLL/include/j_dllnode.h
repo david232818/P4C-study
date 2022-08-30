@@ -31,6 +31,10 @@ extern int j_dllnode_errno;		/* store error flag */
 /* j_dllnode_init: initialize node of dll (double linked list) */
 extern struct j_dllnode *j_dllnode_init(void *data);
 
+/* j_dllnode_read: read node data */
+extern int j_dllnode_read(struct j_dllnode *node,
+			  int (*read_method)(void *data, void *nad));
+
 /*
  * j_dllnode_update: update node data, orign to new
  *
