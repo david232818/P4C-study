@@ -69,6 +69,9 @@ int main()
 
     printf("node count: %zu\n", j_dll_cnt(list));
     list->read(list);
+
+    j_dll_destroy(list);
+    printf("list is destroyed..\n");
     return 0;
 }
 

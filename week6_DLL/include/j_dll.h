@@ -6,8 +6,10 @@
 
 #include "j_dllnode.h"
 
+/* method function type */
 typedef int (*j_dll_method_t)(void *, void *);
 
+/* user defined dll method table */
 struct j_dll_mtable {
     j_dll_method_t method;
 };
@@ -62,6 +64,9 @@ extern int j_dll_errno;
 extern j_dll_t *j_dll_init(j_dll_method_t read_method,
 			   j_dll_method_t compare_method,
 			   j_dll_method_t update_method);
+
+/* j_dll_destroy: destroy the whole dll */
+extern void j_dll_destroy(j_dll_t *dll);
 
 /* j_dll_create: create node then add to dll */
 extern int j_dll_create(j_dll_t *dll, void *data);

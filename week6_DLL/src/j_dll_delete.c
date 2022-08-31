@@ -17,4 +17,3 @@ int j_dll_delete(j_dll_t *dll, void *data)
     j_dll_cnt(dll)--;
     return 0;
 }
-    
