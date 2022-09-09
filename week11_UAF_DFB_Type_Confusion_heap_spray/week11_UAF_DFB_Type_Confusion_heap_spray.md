@@ -5,7 +5,7 @@ UAF, DFB, Type Confusion, and Heap Spray
 Contents
 --------
 1. Introduction
-2. malloc and free of perthread cache (tcache)
+2. free and malloc of perthread cache (tcache)
    1. free 함수
    2. malloc 함수
 3. UAF (Use After Free)
@@ -22,7 +22,7 @@ Contents
 # malloc and free of perthread cache (tcache)
  본 문서에서 다루는 UAF, DFB가 왜 가능한지 이해하기 위해서는 malloc 함수의 할당전략에 대해 알 필요가 있다. 다만, 여기서는 Glibc 2.31 버전의 malloc 함수를 다룰 것이기 때문에 Glibc 버전에 따라 본 글에서 다루는 내용과 차이가 있을 수 있다.
 
- [1]은 Malloc Algorithm과 Free Algorithm을 다음과 같이 설명한다.
+ [1]은 Malloc Algorithm과 Free Algorithm을 각각 다음과 같이 설명한다.
  
 ```
 1. Tcache에 적절한 (또는 정확한 크기의) 청크가 있다면, 이것이 호출자에게 리턴된다. 이때, 더 큰 크기의 bin으로부터 가용한 청크를 사용하려고 하지 않는다.
