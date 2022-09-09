@@ -7,7 +7,6 @@ Contents
 1. Introduction
 2. malloc and free of perthread cache (tcache)
    1. free 함수
-	  1. Perthread cache (tcache)와 메모리 해제
    2. malloc 함수
 3. UAF (Use After Free)
 4. DFB (Double Free Bug)
@@ -194,10 +193,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
   }
 #endif
 ```
-위 코드에 따라 해제된 메모리는 tcache에 저장된다 (#if 블록). 여기서 우리는 tcache와 tcache에서의 메모리 해제가 어떻게 동작하는지 확인할 필요가 있다.
-
-### Perthread cache (tcache)와 메모리 해제
- [2]가 다음과 같이 정의하는 tcache는 일반적인 청크와 달리 tcache_perthread_struct라는 구조체로 정의된다. 그리고 tcache에 존재하는 bins의 entry는 tcache_entry라는 구조체로 정의된다. 그래서 tcache에서의 메모리 할당/해제를 처리하는 경우에는 chunk2mem 매크로가 사용된다.
+위 코드에 따라 해제된 메모리는 tcache에 저장된다 (#if 블록). 여기서 우리는 tcache와 tcache에서의 메모리 해제가 어떻게 동작하는지 확인할 필요가 있다.  [2]가 다음과 같이 정의하는 tcache는 일반적인 청크와 달리 tcache_perthread_struct라는 구조체로 정의된다. 그리고 tcache에 존재하는 bins의 entry는 tcache_entry라는 구조체로 정의된다. 그래서 tcache에서의 메모리 할당/해제를 처리하는 경우에는 chunk2mem 매크로가 사용된다.
  
 ```C
 /* There is one of these for each thread, which contains the
