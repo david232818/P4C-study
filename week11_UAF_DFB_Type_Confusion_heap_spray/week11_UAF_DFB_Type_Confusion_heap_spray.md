@@ -19,7 +19,7 @@ Contents
 # Introduction
  본 문서에서는 힙 (heap)과 관련된 취약점 (vulnerability)인 UAF (Use After Free), DFB (Double Free Bug), Type Confusion을 다루고 공격기법 중 하나인 힙 스프레이 (Heap Spray)를 간략히 살펴본다.
 
-# malloc and free of perthread cache (tcache)
+# free and malloc of perthread cache (tcache)
  본 문서에서 다루는 UAF, DFB가 왜 가능한지 이해하기 위해서는 malloc 함수의 할당전략에 대해 알 필요가 있다. 다만, 여기서는 Glibc 2.31 버전의 malloc 함수를 다룰 것이기 때문에 Glibc 버전에 따라 본 글에서 다루는 내용과 차이가 있을 수 있다.
 
  [1]은 Malloc Algorithm과 Free Algorithm을 각각 다음과 같이 설명한다.
