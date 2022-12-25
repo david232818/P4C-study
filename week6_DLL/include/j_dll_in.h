@@ -2,77 +2,86 @@
 #define __J_DLL_IN_H__
 
 #include <stdio.h>
-#include "../include/j_dll.h"
+
+#include "j_dll.h"
+
+/*
+ * prv_ functions are basically not a complete function. prv_ functions
+ * are called by a caller and have some assumptions. User shall not use
+ * these functions directly.
+ */
+
+static void prv_j_dll_add_node_at_the_end(j_dll_t *dll,
+					  struct j_dllnode *curr,
+					  struct j_dllnode *target)
+{
+    dll->tail = target;
+    target->prev = curr;
+    curr->next = target;
+}
+
+static void prv_j_dll_add_node(j_dll_t *dll,
+			       struct j_dllnode *curr,
+			       struct j_dllnode *target)
+{
+    if (curr == dll->head) {
+	dll->head = target;
+	target->next = curr;
+	curr->prev = target;
+	dll->tail = (dll->cnt == 1) ? curr : dll->tail;
+    } else {
+	target->prev = curr->prev;
+	target->next = curr;
+	curr->prev->next = target;
+	curr->prev = target;
+    }
+}
 
 /*
  * prv_j_dll_add_node: add node to dll
  *
  * this function assumes at least one node is in the list
  */
-static void prv_j_dll_add_node(j_dll_t *dll, struct j_dllnode *node)
+static void prv_j_dll_add(j_dll_t *dll, struct j_dllnode *node)
 {
-    struct j_dllnode *curr_node_ptr;
-    int cres;
+    struct j_dllnode *curr_node, *tmp;
+    int cmpres;
 
-    curr_node_ptr = j_dll_head(dll);
-
-    /*
-     * There are two ways: first is seperating the loop and conditional
-     * part, and second is locating conditional part in the loop.
-     * The first method have to deal with the code location of comparing
-     * node pointer (here, curr_node_ptr) and NULL. And I cannot find
-     * the good solution of this problem. Whatever I try, additional codes
-     * are made. So, I use the second method
-     */
-    while (curr_node_ptr != NULL) {
-	cres = j_dll_mtable(dll, COMPARE)->method(
-	    j_dllnode_data(curr_node_ptr),
-	    j_dllnode_data(node));
-	if (curr_node_ptr == j_dll_head(dll) && cres > 0) {
-	    j_dll_head(dll) = node;
-	    j_previous_node_of(node) = NULL;
-	    j_next_node_of(node) = curr_node_ptr;
-	    j_previous_node_of(curr_node_ptr) = node;
-	    j_dll_tail(dll) = (j_dll_cnt(dll) == 1) ? curr_node_ptr :
-		j_dll_tail(dll);
-	    break;
-	} else if (cres > 0) {
-	    j_previous_node_of(node) = j_previous_node_of(curr_node_ptr);
-	    j_next_node_of(node) = curr_node_ptr;
-	    j_next_node_of(j_previous_node_of(curr_node_ptr)) = node;
-	    j_previous_node_of(curr_node_ptr) = node;
-	    break;
-	} else if (j_next_node_of(curr_node_ptr) == NULL) {
-	    j_dll_tail(dll) = node;
-	    j_previous_node_of(node) = curr_node_ptr;
-	    j_next_node_of(curr_node_ptr) = node;
-	    j_next_node_of(node) = NULL;
-	    break;
+    tmp = dll->head;
+    do {
+	curr_node = tmp;
+	cmpres = dll->mt[J_DLLNODE_COMPARE].method(curr_node, node->data);
+	if (cmpres > 0) {
+	    prv_j_dll_add_node(dll, curr_node, node);
+	    return ;
 	}
-	curr_node_ptr = j_next_node_of(curr_node_ptr);
-    }
+	tmp = curr_node->next;
+    } while (tmp != NULL);
+    prv_j_dll_add_node_at_the_end(dll, curr_node, node);
 }
 
 /* prv_j_dll_unlink_node: unlink node from list */
 static void prv_j_dll_unlink_node(j_dll_t *dll, struct j_dllnode *node)
 {
-    if (node == j_dll_head(dll)) {
-	j_dll_head(dll) = j_next_node_of(node);
-	if (j_dll_head(dll) != NULL)
-	    j_previous_node_of(j_next_node_of(node)) = NULL;
-	j_next_node_of(node) = NULL;
+    struct j_dllnode *head, *tail;
+
+    head = dll->head;
+    tail = dll->tail;
+    if (head == tail) {
+	dll->head = NULL;
+	dll->tail = NULL;
+    } else if (node == head) {
+	dll->head = node->next;
+	node->next->prev = NULL;
+	node->next = NULL;
+    } else if (node == tail) {
+	dll->tail = node->prev;
+	node->prev->next = NULL;
+	node->prev = NULL;
     } else {
-	j_next_node_of(j_previous_node_of(node)) = j_next_node_of(node);
-	if (j_next_node_of(node) != NULL) {
-	    j_previous_node_of(j_next_node_of(node)) =
-		j_previous_node_of(node);
-	    j_previous_node_of(node) = NULL;
-	    j_next_node_of(node) = NULL;
-	} else {
-	    j_dll_tail(dll) = j_previous_node_of(node);
-	    j_next_node_of(j_previous_node_of(node)) = NULL;
-	    j_previous_node_of(node) = NULL;
-	}
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
+	node->prev = node->next = NULL;
     }
 }
 

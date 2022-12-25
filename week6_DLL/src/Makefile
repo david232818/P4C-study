@@ -1,7 +1,7 @@
 # Makefile
 
 CC = gcc
-EXENAME = dllmain
+EXENAME = dlltest
 SOURCES := $(wildcard *.c)
 OBJS = ${SOURCES:.c=.o}
 
