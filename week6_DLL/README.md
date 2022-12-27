@@ -68,7 +68,7 @@ struct data {
 
 전자는 일반적으로 흔히 사용되는 이중 연결 리스트 노드의 형태이고, 사용자가 전달한 인자를 할당된 노드에 복사한다. 따라서 메모리 할당이 2회 (사용자 데이터, 이중 연결 리스트의 노드) 발생하게 된다. 반면 후자는 노드에 사용자 데이터가 포함된 것이 아니라 사용자 데이터에 이전과 다음 노드를 가리키기 위한 변수가 포함되어 (embedded) 있다. 따라서 사용자 데이터를 위한 메모리를 할당하는 것만으로 노드가 만들어진다. 메모리 할당 횟수가 적다는 것은 그만큼 메모리 할당 에러 확인 횟수가 적어진다는 것을 의미한다.
 
- 여기서는 non-intrusive한 방식으로 노드를 구성할 것이다. 이때 노드의 구조는 다음과 같다.
+ 여기서는 non-intrusive한 방식으로 노드를 구성할 것이다. 이때 노드의 구조는 다음과 같고,
  
 ```C
 struct j_dllnode {
@@ -77,7 +77,18 @@ struct j_dllnode {
 };
 ```
 
+그리고 사용자는 이를 데이터에 포함시켜야 한다. 즉, 리스트 라이브러리는 사용자가 위 노드 구조체를 데이터에 포함시켰다고 가정한다.
+
+## CRUD 구현
+ [1, Sec. 3.1]은 노드를 리스트에 추가할 때 정렬할 필요가 없다면, 리스트를 순회할 필요가 없는 방법을 선택하는 것이 가장 간단하다고 설명한다. 그리고 노드를 삭제할 때는 삭제할 노드를 찾기 위해서 함수가 필요하며, 리스트의 끝 (단일 연결 리스트에서는 맨 앞, 이중 연결 리스트에서는 맨 앞과 맨 끝) 노드를 삭제할 때의 경우를 특별히 다루어야 함을 설명한다. 여기서 노드를 찾는 함수는 재귀적으로 문제를 줄여 나가면서 (검색해야 하는 리스트의 크기를 줄이면서) 해결하는 방법을 선택한다. 마지막으로 이렇게 재귀적인 방법을 선택하는 것이 보다 간단한 리스트 연산을 만들고, 효율적인 분할 정복 (divide-and-conquer) 알고리즘으로 안내한다고 설명한다.
+ 
+ 여기서는 이중 연결 리스트의 노드를 다루며 노드를 추가할 때는 오름차순으로 정렬할 것이다. 그래서 리스트의 양 끝에 노드를 삽입하는 방법을 쓸 수 없고, 노드를 추가할 위치를 찾기 위해 리스트를 순회해야만 한다. 이는 삭제, 갱신도 마찬가지이다. 여기서 노드를 찾는 함수는 재귀적으로 구현하되 [3, Sec. 1.2.1]이 설명하는 선형 재귀 프로세스 (linear iterative process)의 형태로 구현할 것이다. 이 선형 재귀 프로세스는 흔히 꼬리 재귀 (tail-recursive) 최적화라고 불리는 기법을 적용할 수 있는 형태이다.
+ 
+## 사용자 인터페이스
+
 # References
 [1] Steven S. Skiena, "The Algorithm Design Manual", Springer, 2008
 
 [2] "Intrusive and non-intrusive containers", boost C++ LIBRARIES. [Online]. Available: https://www.boost.org/doc/libs/1_35_0/doc/html/intrusive/intrusive_vs_nontrusive.html, [Accessed Dec. 27, 2022]
+
+[3] Harold Abelson, Gerald Jay Sussman, Julie Sussman, "Structure and Interpretation of Computer Programs", MIT Press, 1984
