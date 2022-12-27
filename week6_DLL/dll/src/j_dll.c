@@ -4,16 +4,19 @@
 #include "j_dll_in.h"
 #include "j_error.h"
 
+/* j_dll_is_empty: check the list is empty */
 static int j_dll_is_empty(j_dll_t *self)
 {
     return (self->cnt == 0);
 }
 
+/* j_dll_is_full: check the list is full */
 static int j_dll_is_full(j_dll_t *self)
 {
     return (self->cnt == SIZE_MAX);
 }
 
+/* j_dll_create: make node and add to the list */
 static int j_dll_create(j_dll_t *self, void *data)
 {
     struct j_dllnode *node;
@@ -47,6 +50,10 @@ static int j_dll_create(j_dll_t *self, void *data)
     return 0;
 }
 
+/*
+ * j_dll_delete: remove node that has corresponding data from the list and
+ *               free it
+ */
 static int j_dll_delete(j_dll_t *self, void *data)
 {
     struct j_dllnode *target;
@@ -124,6 +131,7 @@ static struct j_dllnode *j_dll_search(j_dll_t *self, void *data)
     return curr_node;
 }
 
+/* j_dll_update: update node that has corresponding data (=origin) to new */
 static int j_dll_update(j_dll_t *self, void *origin, void *new)
 {
     struct j_dllnode *curr_node;
@@ -182,6 +190,7 @@ j_dll_t *j_dll_init(j_dllnode_method_t read,
     return dll;
 }
 
+/* j_dll_destroy: destroy dll */
 void j_dll_destroy(j_dll_t *dll)
 {
     struct j_dllnode *curr_node, *head, *tail;
