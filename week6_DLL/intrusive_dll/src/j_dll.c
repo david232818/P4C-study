@@ -22,12 +22,20 @@ static int j_dll_is_full(j_dll_t *self)
 /* j_dll_get_data: get the data from the node */
 static void *j_dll_get_data(j_dll_t *self, struct j_dllnode *node)
 {
+    if (node == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_NODE;
+	return NULL;
+    }
     return ((char *) node - self->data_offset);
 }
 
 /* j_dll_get_node: get the node from the data */
 static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 {
+    if (data == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
+	return NULL;
+    }
     return (struct j_dllnode *) ((char *) data + self->data_offset);
 }
 
@@ -37,7 +45,7 @@ static struct j_dllnode *j_dll_search(j_dll_t *self,
 				      void *data,
 				      int cmpres)
 {
-    if (start == NULL)
+    if (start == NULL || data == NULL)
 	return NULL;
     if (self->mt[J_DLLNODE_COMPARE].method(self, start, data) == cmpres)
 	return start;
@@ -50,10 +58,16 @@ static struct j_dllnode *j_dll_search(j_dll_t *self,
  */
 static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
 {
-    if (node == NULL)
+    if (node == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_NODE;
 	return -1;
-    if (self->mt[J_DLLNODE_READ].method(self, node, buf) == -1)
+    }
+    
+    if (self->mt[J_DLLNODE_READ].method(self, node, buf) == -1) {
+	j_dll_errno = J_DLL_ERR_WHILE_METHOD;
 	return -1;
+    }
+
     return j_dll_read(self, node->next, buf);
 }
 
@@ -73,6 +87,7 @@ static int j_dll_update(j_dll_t *self, void *origin, void *new)
 
     prv_j_dll_unlink_node(self, target);
     if (self->mt[J_DLLNODE_UPDATE].method(self, target, new) == -1) {
+	j_dll_errno = J_DLL_ERR_WHILE_METHOD;
 	prv_j_dll_insert(self, target);
 	return -1;
     }
