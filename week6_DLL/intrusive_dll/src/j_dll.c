@@ -7,26 +7,31 @@
 #include "j_dll_in.h"
 #include "j_error.h"
 
+/* j_dll_is_empty: check the self is empty */
 static int j_dll_is_empty(j_dll_t *self)
 {
     return (self->cnt == 0);
 }
 
+/* j_dll_is_full: check the self is full */
 static int j_dll_is_full(j_dll_t *self)
 {
     return (self->cnt == SIZE_MAX);
 }
 
+/* j_dll_get_data: get the data from the node */
 static void *j_dll_get_data(j_dll_t *self, struct j_dllnode *node)
 {
     return ((char *) node - self->data_offset);
 }
 
+/* j_dll_get_node: get the node from the data */
 static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 {
     return (struct j_dllnode *) ((char *) data + self->data_offset);
 }
 
+/* j_dll_search: search the start that makes cmpres with data */
 static struct j_dllnode *j_dll_search(j_dll_t *self,
 				      struct j_dllnode *start,
 				      void *data,
@@ -39,6 +44,10 @@ static struct j_dllnode *j_dll_search(j_dll_t *self,
     return j_dll_search(self, start->next, data, cmpres);
 }
 
+/*
+ * j_dll_read: read the data from the node and print it to the stdin
+ * or buf
+ */
 static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
 {
     if (node == NULL)
@@ -48,6 +57,7 @@ static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
     return j_dll_read(self, node->next, buf);
 }
 
+/* j_dll_update: update the data that has corresponding origin to new */
 static int j_dll_update(j_dll_t *self, void *origin, void *new)
 {
     struct j_dllnode *target;
@@ -63,13 +73,14 @@ static int j_dll_update(j_dll_t *self, void *origin, void *new)
 
     prv_j_dll_unlink_node(self, target);
     if (self->mt[J_DLLNODE_UPDATE].method(self, target, new) == -1) {
-	prv_j_dll_add(self, self->get_data(self, target));
+	prv_j_dll_insert(self, target);
 	return -1;
     }
-    prv_j_dll_add(self, self->get_data(self, target));
+    prv_j_dll_insert(self, target);
     return 0;
 }
 
+/* j_dll_create: create the node in the self */
 static int j_dll_create(j_dll_t *self, void *data)
 {
     struct j_dllnode *node;
@@ -86,11 +97,12 @@ static int j_dll_create(j_dll_t *self, void *data)
 	self->head = node;
 	self->tail = node;
     } else
-	prv_j_dll_add(self, data);
+	prv_j_dll_insert(self, self->get_node(self, data));
     self->cnt++;
     return 0;
 }
 
+/* j_dll_delete: delete the node that has corresponding data from the self */
 static int j_dll_delete(j_dll_t *self, void *data)
 {
     struct j_dllnode *target;
@@ -103,12 +115,11 @@ static int j_dll_delete(j_dll_t *self, void *data)
     if ((target = self->search(self, self->head, data, 0)) == NULL)
 	return -1;
 
-    prv_j_dll_unlink_node(self, target);
-    self->cnt--;
-    free(self->get_data(self, target));
+    prv_j_dll_delete_node(self, target);
     return 0;
 }
 
+/* j_dll_init: initialize dll */
 j_dll_t *j_dll_init(j_dllnode_method_t read,
 		    j_dllnode_method_t update,
 		    j_dllnode_method_t compare,
@@ -145,10 +156,24 @@ j_dll_t *j_dll_init(j_dllnode_method_t read,
     return dll;
 }
 
-void j_dll_destroy(j_dll_t *dll, struct j_dllnode *start)
+/* j_dll_destroy: destroy dll */
+void j_dll_destroy(j_dll_t *dll)
 {
-    if (start == NULL)
+    struct j_dllnode *target;
+
+    if (dll == NULL)
 	return ;
-    j_dll_destroy(dll, start->next);
-    dll->delete(dll, dll->get_data(dll, start));
+    
+    if (dll->is_empty(dll)) {
+	free(dll);
+	return ;
+    }
+
+    target = dll->head;
+    while (target->next != NULL) {
+	target = target->next;
+	prv_j_dll_delete_node(dll, target->prev);
+    }
+    prv_j_dll_delete_node(dll, target);
+    free(dll);
 }

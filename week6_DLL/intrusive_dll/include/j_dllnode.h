@@ -1,7 +1,11 @@
 #ifndef __J_DLLNODE_H__
 #define __J_DLLNODE_H__
 
-/* generic node structure for double linked list (dll) */
+/*
+ * node structure for intrusive double linked list
+ *
+ * => user shall embed this structure in the last field of user defined data
+ */
 struct j_dllnode {
     struct j_dllnode *prev;
     struct j_dllnode *next;

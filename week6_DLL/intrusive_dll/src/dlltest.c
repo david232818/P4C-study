@@ -58,6 +58,9 @@ int main()
     printf("\n---[ Stage 5: delete\n");
     dll->read(dll, dll->head, NULL);
 
+    printf("\n---[ Stage 6: dll destroy\n");
+    j_dll_destroy(dll);
+
     return 0;
 }
 

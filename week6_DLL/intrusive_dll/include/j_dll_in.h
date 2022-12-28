@@ -2,16 +2,19 @@
 #define __J_DLL_IN_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include "j_dll.h"
 
+/* User shall not include this header directly. Use j_dll.h header. */
+
 /*
- * prv_ functions are basically not a complete function. prv_ functions
- * are called by a caller and have some assumptions. User shall not use
- * these functions directly.
+ * prv_ functions are not complete. They are called by the caller and
+ * and have some assumptions that shall be satisfied.
  */
 
-static void prv_j_dll_add_node_at_the_end(j_dll_t *dll,
+/* prv_j_dll_insert_node_at_the_end: insert the target at the end of the dll */
+static void prv_j_dll_insert_node_at_the_end(j_dll_t *dll,
 					  struct j_dllnode *curr,
 					  struct j_dllnode *target)
 {
@@ -20,7 +23,8 @@ static void prv_j_dll_add_node_at_the_end(j_dll_t *dll,
     curr->next = target;
 }
 
-static void prv_j_dll_add_node(j_dll_t *dll,
+/* prv_j_dll_insert_node: insert the target in front of the curr */
+static void prv_j_dll_insert_node(j_dll_t *dll,
 			       struct j_dllnode *curr,
 			       struct j_dllnode *target)
 {
@@ -37,25 +41,28 @@ static void prv_j_dll_add_node(j_dll_t *dll,
     }
 }
 
-static void prv_j_dll_add(j_dll_t *dll, void *data)
+/* prv_j_dll_insert: insert the node to the dll */
+static void prv_j_dll_insert(j_dll_t *dll, struct j_dllnode *node)
 {
-    struct j_dllnode *target, *node;
+    struct j_dllnode *target;
 
-    node = dll->get_node(dll, data);
-    if ((target = dll->search(dll, dll->head, data, 1)) == NULL)
-	prv_j_dll_add_node_at_the_end(dll, dll->tail, node);
+    if ((target = dll->search(dll,
+			      dll->head,
+			      dll->get_data(dll, node),
+			      1)) == NULL)
+	prv_j_dll_insert_node_at_the_end(dll, dll->tail, node);
     else
-	prv_j_dll_add_node(dll, target, node);
+	prv_j_dll_insert_node(dll, target, node);
 }
 
-/* prv_j_dll_unlink_node: unlink node from list */
+/* prv_j_dll_unlink_node: unlink the node from the dll */
 static void prv_j_dll_unlink_node(j_dll_t *dll, struct j_dllnode *node)
 {
     struct j_dllnode *head, *tail;
 
     head = dll->head;
     tail = dll->tail;
-    if (head == tail) {
+    if (head == tail) {		/* there is only one node in the dll */
 	dll->head = NULL;
 	dll->tail = NULL;
     } else if (node == head) {
@@ -71,6 +78,14 @@ static void prv_j_dll_unlink_node(j_dll_t *dll, struct j_dllnode *node)
 	node->next->prev = node->prev;
 	node->prev = node->next = NULL;
     }
+}
+
+/* prv_j_dll_delete_node: delete the node from the dll */
+static void prv_j_dll_delete_node(j_dll_t *dll, struct j_dllnode *node)
+{
+    prv_j_dll_unlink_node(dll, node);
+    dll->cnt--;
+    free(dll->get_data(dll, node));
 }
 
 #endif
