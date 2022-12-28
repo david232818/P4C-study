@@ -56,9 +56,7 @@ enum j_dll_flags {
     J_DLL_ERR_INVALID_DLL = 4,	  /* NULL dll */
     J_DLL_ERR_INVALID_DATA = 8,	  /* NULL data */
     J_DLL_ERR_WHILE_METHOD = 16,  /* error while doing the method */
-    J_DLL_FULL = 32,	  /* dll is full */
-    J_DLL_EMPTY = 64,	  /* dll is empty */
-    J_DLL_ERR_INVALID_NODE = 128 /* NULL node */
+    J_DLL_ERR_INVALID_NODE = 32 /* NULL node */
 };
 
 /* type define for user defined method */
