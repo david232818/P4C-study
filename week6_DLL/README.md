@@ -73,8 +73,8 @@ struct data {
  
 ```C
 struct j_dllnode {
-    struct j_dllnode *prev;
-    struct j_dllnode *next;
+	struct j_dllnode *prev;
+	struct j_dllnode *next;
 };
 ```
 
