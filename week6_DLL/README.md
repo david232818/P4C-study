@@ -95,7 +95,7 @@ static struct j_dllnode *prv_j_dll_search_node(j_dll_t *dll,
 					       int cmpres)
 {
     if (start == NULL ||
-	dll->mt[J_DLLNODE_COMPARE].method(dll, start, data) == cmpres)
+		dll->mt[J_DLLNODE_COMPARE].method(dll, start, data) == cmpres)
 	return start;
     prv_j_dll_search_node(dll, start->next, data, cmpres);
 }
