@@ -7,7 +7,6 @@
 
 /* user defined method length and indexes */
 #define J_DLLNODE_MTABLE_LEN 3
-
 enum j_dllnode_mtable_idx {
     J_DLLNODE_READ = 00,
     J_DLLNODE_UPDATE = 01,
@@ -40,9 +39,14 @@ typedef struct _j_dll {
     void *(*get_data)(struct _j_dll *, struct j_dllnode *);
     struct j_dllnode *(*get_node)(struct _j_dll *, void *);
 
+    /*
+     * User shall decide the int type value for greater than, less than,
+     * and equal cases.
+     */
     struct j_dllnode *(*search)(struct _j_dll *,
 				void *,
 				int);
+
     int (*read)(struct _j_dll *, struct j_dllnode *, void *);
     int (*update)(struct _j_dll *, void *, void *);
     int (*create)(struct _j_dll *, void *);
