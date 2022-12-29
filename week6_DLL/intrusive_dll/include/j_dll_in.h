@@ -47,7 +47,6 @@ static void prv_j_dll_insert(j_dll_t *dll, struct j_dllnode *node)
     struct j_dllnode *target;
 
     if ((target = dll->search(dll,
-			      dll->head,
 			      dll->get_data(dll, node),
 			      1)) == NULL)
 	prv_j_dll_insert_node_at_the_end(dll, dll->tail, node);
@@ -86,6 +85,30 @@ static void prv_j_dll_delete_node(j_dll_t *dll, struct j_dllnode *node)
     prv_j_dll_unlink_node(dll, node);
     dll->cnt--;
     free(dll->get_data(dll, node));
+}
+
+/* prv_j_dll_search_node: search the start that makes cmpres with data */
+static struct j_dllnode *prv_j_dll_search_node(j_dll_t *dll,
+					       struct j_dllnode *start,
+					       void *data,
+					       int cmpres)
+{
+    if (start == NULL ||
+	dll->mt[J_DLLNODE_COMPARE].method(dll, start, data) == cmpres)
+	return start;
+    prv_j_dll_search_node(dll, start->next, data, cmpres);
+}
+
+/* prv_j_dll_read_nodes: read the data and print it to the stdin or buf */
+static int prv_j_dll_read_nodes(j_dll_t *dll,
+			       struct j_dllnode *start,
+			       void *buf)
+{
+    if (start == NULL)
+	return 0;
+    if (dll->mt[J_DLLNODE_READ].method(dll, start, buf) == -1)
+	return -1;
+    prv_j_dll_read_nodes(dll, start->next, buf);
 }
 
 #endif

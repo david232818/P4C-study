@@ -41,7 +41,6 @@ typedef struct _j_dll {
     struct j_dllnode *(*get_node)(struct _j_dll *, void *);
 
     struct j_dllnode *(*search)(struct _j_dll *,
-				struct j_dllnode *,
 				void *,
 				int);
     int (*read)(struct _j_dll *, struct j_dllnode *, void *);
@@ -55,8 +54,7 @@ enum j_dll_flags {
     J_DLL_ERR_INVALID_METHOD = 2, /* NULL method */
     J_DLL_ERR_INVALID_DLL = 4,	  /* NULL dll */
     J_DLL_ERR_INVALID_DATA = 8,	  /* NULL data */
-    J_DLL_ERR_WHILE_METHOD = 16,  /* error while doing the method */
-    J_DLL_ERR_INVALID_NODE = 32 /* NULL node */
+    J_DLL_ERR_INVALID_NODE = 16 /* NULL node */
 };
 
 /* type define for user defined method */

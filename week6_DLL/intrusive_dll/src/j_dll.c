@@ -41,20 +41,20 @@ static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 
 /* j_dll_search: search the start that makes cmpres with data */
 static struct j_dllnode *j_dll_search(j_dll_t *self,
-				      struct j_dllnode *start,
 				      void *data,
 				      int cmpres)
 {
-    if (start == NULL || data == NULL)
+    if (data == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
 	return NULL;
-    if (self->mt[J_DLLNODE_COMPARE].method(self, start, data) == cmpres)
-	return start;
-    return j_dll_search(self, start->next, data, cmpres);
+    }
+
+    return prv_j_dll_search_node(self, self->head, data, cmpres);
 }
 
 /*
- * j_dll_read: read the data from the node and print it to the stdin
- * or buf
+ * j_dll_read: read the data that the node is embedded and print it
+ * to the stdin or buf
  */
 static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
 {
@@ -62,13 +62,8 @@ static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
 	j_dll_errno = J_DLL_ERR_INVALID_NODE;
 	return -1;
     }
-    
-    if (self->mt[J_DLLNODE_READ].method(self, node, buf) == -1) {
-	j_dll_errno = J_DLL_ERR_WHILE_METHOD;
-	return -1;
-    }
 
-    return j_dll_read(self, node->next, buf);
+    return prv_j_dll_read_nodes(self, self->head, buf);
 }
 
 /* j_dll_update: update the data that has corresponding origin to new */
@@ -82,12 +77,11 @@ static int j_dll_update(j_dll_t *self, void *origin, void *new)
 	return -1;
     }
 
-    if ((target = self->search(self, self->head, origin, 0)) == NULL)
+    if ((target = self->search(self, origin, 0)) == NULL)
 	return -1;
 
     prv_j_dll_unlink_node(self, target);
     if (self->mt[J_DLLNODE_UPDATE].method(self, target, new) == -1) {
-	j_dll_errno = J_DLL_ERR_WHILE_METHOD;
 	prv_j_dll_insert(self, target);
 	return -1;
     }
@@ -127,7 +121,7 @@ static int j_dll_delete(j_dll_t *self, void *data)
 	return -1;
     }
 
-    if ((target = self->search(self, self->head, data, 0)) == NULL)
+    if ((target = self->search(self, data, 0)) == NULL)
 	return -1;
 
     prv_j_dll_delete_node(self, target);
