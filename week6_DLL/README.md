@@ -45,10 +45,9 @@ References
  
 ```C
 struct node {
-    /* some data */
-	
-    struct node *prev;
-    struct node *next;
+	/* some data */
+	struct node *prev;
+	struct node *next;
 };
 ```
 
