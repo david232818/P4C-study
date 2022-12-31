@@ -119,7 +119,7 @@ static struct j_dllnode *j_dll_search(j_dll_t *self,
 }
 ```
 
- 위와 같은 검색 함수는 노드 생성, 삭제, 갱신에서 그 위치를 찾거나, 연산을 수행할 노드를 찾는데 사용된다. 예를 들어, 노드 생성이라면 생성할 위치를, 노드 갱신이라면 갱신할 노드를 찾는데 사용되는 것이다.
+ 위와 같은 검색 함수는 특정 노드를 찾는 것뿐만 아니라 노드 생성 시, 노드를 삽입할 위치도 찾을 수 있다는 것을 기억하자. 이는 검색 함수가 인자로 전달된 데이터와 노드를 비교할 때 같은 경우 (반환값이 0인 경우)만을 검사하는 것이 아니라 전달된 cmpres와 같은지 검사하기 때문이다. 이때 주의해야할 것은 사용자는 비교 함수를 정의할 때 반환값을 -1 (해당 노드의 데이터가 전달된 데이터보다 작은 경우), 0 (해당 노드의 데이터가 전달된 데이터와 같은 경우), 1 (해당 노드의 데이터가 전달된 데이터보다 큰 경우)로 정의해야 한다는 것이다. 그럼 이제 검색 함수가 노드 생성, 삭제, 갱신에서 어떻게 사용되는지 알아보자.
  
  노드 생성을 수행하는 함수는 다음과 같다.
  
@@ -190,6 +190,68 @@ static int j_dll_create(j_dll_t *self, void *data)
 }
 ```
 
+위 코드의 prv_j_dll_insert()가 검색 메서드를 호출할 때 네 번째 인자로 1을 전달한다는 것에 주목하자. 이는 전달된 데이터보다 큰 노드를 검색하라는 의미이며, 곧 오름차순으로 노드를 삽입할 때 삽입할 위치를 검색하는 것과 같다.
+
+ 이제 노드 삭제를 수행하는 함수를 살펴보자. 노드 삭제를 수행하는 함수의 코드는 다음과 같다.
+ 
+```C
+/* prv_j_dll_unlink_node: unlink the node from the dll */
+static void prv_j_dll_unlink_node(j_dll_t *dll, struct j_dllnode *node)
+{
+    struct j_dllnode *head, *tail;
+
+    head = dll->head;
+    tail = dll->tail;
+    if (head == tail) {		/* there is only one node in the dll */
+	dll->head = NULL;
+	dll->tail = NULL;
+    } else if (node == head) {
+	dll->head = node->next;
+	node->next->prev = NULL;
+	node->next = NULL;
+    } else if (node == tail) {
+	dll->tail = node->prev;
+	node->prev->next = NULL;
+	node->prev = NULL;
+    } else {
+	node->prev->next = node->next;
+	node->next->prev = node->prev;
+	node->prev = node->next = NULL;
+    }
+}
+
+/* prv_j_dll_delete_node: delete the node from the dll */
+static void prv_j_dll_delete_node(j_dll_t *dll, struct j_dllnode *node)
+{
+    prv_j_dll_unlink_node(dll, node);
+    dll->cnt--;
+    free(dll->get_data(dll, node));
+}
+```
+
+```C
+/* j_dll_create: create the node in the self */
+static int j_dll_create(j_dll_t *self, void *data)
+{
+    struct j_dllnode *node;
+
+    if (data == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
+	return -1;
+    }
+
+    node = self->get_node(self, data);
+    node->prev = NULL;
+    node->next = NULL;
+    if (self->is_empty(self)) {
+	self->head = node;
+	self->tail = node;
+    } else
+	prv_j_dll_insert(self, self->get_node(self, data));
+    self->cnt++;
+    return 0;
+}
+```
 
 # References
 [1] Steven S. Skiena, "The Algorithm Design Manual", Springer, 2008
