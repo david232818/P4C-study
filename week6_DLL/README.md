@@ -230,25 +230,20 @@ static void prv_j_dll_delete_node(j_dll_t *dll, struct j_dllnode *node)
 ```
 
 ```C
-/* j_dll_create: create the node in the self */
-static int j_dll_create(j_dll_t *self, void *data)
+/* j_dll_delete: delete the node that has corresponding data from the self */
+static int j_dll_delete(j_dll_t *self, void *data)
 {
-    struct j_dllnode *node;
+    struct j_dllnode *target;
 
     if (data == NULL) {
 	j_dll_errno = J_DLL_ERR_INVALID_DATA;
 	return -1;
     }
 
-    node = self->get_node(self, data);
-    node->prev = NULL;
-    node->next = NULL;
-    if (self->is_empty(self)) {
-	self->head = node;
-	self->tail = node;
-    } else
-	prv_j_dll_insert(self, self->get_node(self, data));
-    self->cnt++;
+    if ((target = self->search(self, data, 0)) == NULL)
+	return -1;
+
+    prv_j_dll_delete_node(self, target);
     return 0;
 }
 ```
