@@ -76,6 +76,32 @@ struct j_dllnode {
 
 사용자는 이를 데이터에 포함시켜야 한다. 즉, 라이브러리는 사용자가 위 노드 구조체를 데이터에 포함시켰다고 가정한다. 여기서 사용자는 이 라이브러리를 사용하여 애플리케이션을 작성하는 개발자를 말한다.
 
+ 이러한 노드 구성은 노드에서 데이터를, 데이터에서 노드를 얻는 방법이 non-intrusive한 노드 구성보다 복잡해지도록 만든다. 일반적인 (generic) 데이터를 이중 연결 리스트에 저장하고자 할 때 이를 구현하는 방법은 주어진 데이터 타입에서 노드의 오프셋을 구하는 것이다. 다만, 여기서 오프셋은 사용자가 적절한 값으로 제공해야만 한다. 여기서 [4, Sec. 7.17]은 구조체 멤버의 (구조체의 시작 주소로부터의) 오프셋을 구하기 위한 offsetof 매크로를 정의한다. 따라서 사용자는 이 매크로를 사용하여 데이터에 포함된 노드 구조체의 오프셋을 제공해야 한다. 이 값이 data_offset이라는 attribute로 저장된다고 가정하면, 이로부터 다음과 같이 노드에서 데이터를, 데이터에서 노드를 구하는 함수를 다음과 같이 작성할 수 있다.
+ 
+```C
+/* j_dll_get_data: get the data from the node */
+static void *j_dll_get_data(j_dll_t *self, struct j_dllnode *node)
+{
+    if (node == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_NODE;
+	return NULL;
+    }
+    return ((char *) node - self->data_offset);
+}
+
+/* j_dll_get_node: get the node from the data */
+static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
+{
+    if (data == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
+	return NULL;
+    }
+    return (struct j_dllnode *) ((char *) data + self->data_offset);
+}
+```
+
+
+
 
 ## 노드를 연결하는 방법
 
@@ -248,9 +274,18 @@ static int j_dll_delete(j_dll_t *self, void *data)
 }
 ```
 
+노드를 삭제하는 함수는 삭제할 노드를 찾기 위해 검색 메서드를 사용한다. 그리고 노드 생성 함수에서와 같이 검색 메서드가 노드를 삭제하는 과정에서 유일하게 재귀적인 부분이다.
+
+ 마지막으로 노드의 데이터를 갱신하는 함수를 살펴보자.
+ 
+```C
+```
+
 # References
 [1] Steven S. Skiena, "The Algorithm Design Manual", Springer, 2008
 
 [2] "Intrusive and non-intrusive containers", boost C++ LIBRARIES. [Online]. Available: https://www.boost.org/doc/libs/1_35_0/doc/html/intrusive/intrusive_vs_nontrusive.html, [Accessed Dec. 27, 2022]
 
 [3] Harold Abelson, Gerald Jay Sussman, Julie Sussman, "Structure and Interpretation of Computer Programs", MIT Press, 1984
+
+[4] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming Languages -- C", ISO/IEC, 1999
