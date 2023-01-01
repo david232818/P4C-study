@@ -54,10 +54,10 @@ Contents
  
 ```C
 struct node {
-	/* some data */
+    /* some data */
 	
-	struct node *prev;
-	struct node *next;
+    struct node *prev;
+    struct node *next;
 };
 ```
 
@@ -65,14 +65,14 @@ struct node {
 
 ```C
 struct node {
-	struct node *prev;
-	struct node *next;
+    struct node *prev;
+    struct node *next;
 };
 
 struct data {
-	/* some data */
+    /* some data */
 	
-	struct node link;
+    struct node link;
 };
 ```
 
