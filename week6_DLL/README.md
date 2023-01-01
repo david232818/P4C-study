@@ -20,6 +20,17 @@ Contents
 
 
 # 이중 연결 리스트
+ 연결 리스트 (Linked List)라는 개념은 [5]가 제시한 개념으로, 문제의 증명을 기호 논리를 통해 찾는 프로그램인 Logical Theorist (LT)을 개발하는 과정에서 제안되었다. 해당 프로그램에 적용되는 여러 요구사항 (표현의 리스트를 다룰 수 있어야 하고, 논리 문제를 해결하기 위한 프로세스의 리스트를 다룰 수 있어야 한다는 것 등)을 해결하기 위해서는 한 언어가 필요했고 이것이 바로 IPL (Information Processing Language)이다. 즉, LT가 다룰 수 있어야 하는 리스트를 표현하기 위해 IPL이 사용된 것이다. 그리고 IPL은 리스트를 표현할 때 location words를 사용했는데, 이는 현대의 포인터와 같은 개념이라고 볼 수 있다. IPL은 리스트에 두 가지 location words를 두었는데, 하나는 element를 가리키고, 다른 하나는 다음 location words를 가리키도록 구성했다. 이를 그림으로 표현하면 다음과 같다.
+ 
+```
+    +--------+    +--------+    +--------+
+--->|Location|--->|Location|--->|Location|---> (-1)
+    +--------+    +--------+    +--------+
+        |              |             |
+        V              V             V
+      element       element       element
+```
+
  이중 연결 리스트 (Double Linked List)는 [1, Sec. 3.1]이 설명하는 연결된 자료 구조 (Linked Data Structures)에 속하는 단일 연결 리스트 (Single Linked List)에서 이전 노드를 가리키는 것이 추가된 자료구조이다. 이를 그림으로 표현하면 다음과 같다.
  
 ```
@@ -29,7 +40,7 @@ Contents
     +----+    +----+    +----+
 ```
 
-위와 같은 구조에서 첫 번째 노드와 마지막 노드는 각각 head, tail이라고 불리며 접근하기 위한 변수가 별도로 존재하여 접근하는데 O(1)이 소요된다. 그리고 이전 노드와 다음 노드를 가리키는 변수는 prev (previous)와 next 또는 bk (back)와 fd (forward)로 표현된다. 이렇게 이전 노드와 다음 노드를 가리키는 부분이 존재하기 때문에 단일 연결 리스트와 다르게 순회하는 방향을 조절할 수 있게 된다. 즉, 앞에서부터 순회할 수도 있고, 뒤에서부터 순회할 수도 있다. 이는 단일 연결 리스트에서의 오름차순과 내림차순 문제를 정렬 문제에서 읽는 순서의 문제로 단순화 시킨다.
+위와 같은 구조에서 첫 번째 노드와 마지막 노드는 각각 head, tail이라고 불리며 접근하기 위한 변수가 별도로 존재하여 접근하는데 O(1)이 소요된다. 그리고 이전 노드와 다음 노드를 가리키는 변수는 prev (previous)와 next 또는 bk (back)와 fd (forward)로 표현된다. 이렇게 이전 노드와 다음 노드를 가리키는 부분이 존재하기 때문에 단일 연결 리스트와 다르게 순회하는 방향을 조절할 수 있게 된다. 즉, 앞에서부터 순회할 수도 있고, 뒤에서부터 순회할 수도 있다. 이는 단일 연결 리스트에서의 오름차순과 내림차순 문제를 정렬 문제에서 읽는 순서의 문제로 단순화 시킨다. 하지만 임의의 노드에 접근하는데는 여전히 단일 연결 리스트와 같이 O(n)이다.
 
 
 # 구현 방식
@@ -76,7 +87,7 @@ struct j_dllnode {
 
 사용자는 이를 데이터에 포함시켜야 한다. 즉, 라이브러리는 사용자가 위 노드 구조체를 데이터에 포함시켰다고 가정한다. 여기서 사용자는 이 라이브러리를 사용하여 애플리케이션을 작성하는 개발자를 말한다.
 
- 이러한 노드 구성은 노드에서 데이터를, 데이터에서 노드를 얻는 방법이 non-intrusive한 노드 구성보다 복잡해지도록 만든다. 일반적인 (generic) 데이터를 이중 연결 리스트에 저장하고자 할 때 이를 구현하는 방법은 주어진 데이터 타입에서 노드의 오프셋을 구하는 것이다. 다만, 여기서 오프셋은 사용자가 적절한 값으로 제공해야만 한다. 여기서 [4, Sec. 7.17]은 구조체 멤버의 (구조체의 시작 주소로부터의) 오프셋을 구하기 위한 offsetof 매크로를 정의한다. 따라서 사용자는 이 매크로를 사용하여 데이터에 포함된 노드 구조체의 오프셋을 제공해야 한다. 이 값이 data_offset이라는 attribute로 저장된다고 가정하면, 이로부터 다음과 같이 노드에서 데이터를, 데이터에서 노드를 구하는 함수를 다음과 같이 작성할 수 있다.
+ 이러한 노드 구성은 노드에서 데이터를, 데이터에서 노드를 얻는 방법이 non-intrusive한 노드 구성보다 복잡해지도록 만든다. 일반적인 (generic) 데이터를 이중 연결 리스트에 저장하고자 할 때 이를 구현하는 방법은 주어진 데이터 타입에서 노드의 오프셋을 구하는 것이다. 다만, 여기서 오프셋은 사용자가 적절한 값으로 제공해야만 한다. 여기서 [4, Sec. 7.17]은 구조체 멤버의 (구조체의 시작 주소로부터의) 오프셋을 구하기 위한 offsetof 매크로를 정의한다. 따라서 사용자는 이 매크로를 사용하여 데이터에 포함된 노드 구조체의 오프셋을 제공할 수 있고, 제공해야만 한다. 이 값이 data_offset이라는 attribute로 저장된다고 가정하면, 이로부터 다음과 같이 노드에서 데이터를, 데이터에서 노드를 구하는 함수를 다음과 같이 작성할 수 있다.
  
 ```C
 /* j_dll_get_data: get the data from the node */
@@ -99,8 +110,6 @@ static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
     return (struct j_dllnode *) ((char *) data + self->data_offset);
 }
 ```
-
-
 
 
 ## 노드를 연결하는 방법
@@ -289,3 +298,5 @@ static int j_dll_delete(j_dll_t *self, void *data)
 [3] Harold Abelson, Gerald Jay Sussman, Julie Sussman, "Structure and Interpretation of Computer Programs", MIT Press, 1984
 
 [4] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming Languages -- C", ISO/IEC, 1999
+
+[5] Allen Newell, J. C. Shaw, "Programming the Logic Theory Machin", Proceedings of the Western Joint Computer Conference, pp. 230-240, 1957
