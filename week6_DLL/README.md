@@ -78,7 +78,7 @@ struct data {
 
 전자는 일반적으로 흔히 사용되는 이중 연결 리스트 노드의 형태이고, 사용자가 전달한 인자를 할당된 노드에 복사한다. 따라서 메모리 할당이 2회 (사용자 데이터, 이중 연결 리스트의 노드) 발생하게 된다. 반면 후자는 노드에 사용자 데이터가 포함된 것이 아니라 사용자 데이터에 이전과 다음 노드를 가리키기 위한 변수가 포함되어 (embedded) 있다. 따라서 사용자 데이터를 위한 메모리를 할당하는 것만으로 노드가 만들어진다. 메모리 할당 횟수가 적다는 것은 그만큼 메모리 할당 에러 확인 횟수가 적어진다는 것을 의미한다.
 
- 여기서는 non-intrusive한 방식으로 노드를 구성한다. 이때 노드의 구조는 다음과 같고,
+ 여기서는 non-intrusive한 방식으로 노드를 구성한다. 이때 노드의 구조는 다음과 같이 j_dllnode.h 헤더에 존재하고,
  
 ```C
 struct j_dllnode {
@@ -119,9 +119,24 @@ static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 
 
 ## 사용자 인터페이스: 클래스
- 여기서는 이중 연결 리스트와 관련된 변수, 함수를 하나의 구조체에 모아서 리스트 구조체를 다음과 같이 구성한다.
+ 여기서는 이중 연결 리스트와 관련된 변수, 함수를 모아서 리스트 클래스를 구성한다. 이렇게 리스트 클래스를 별도로 두는 이유는 여러 리스트를 관리할 때 편리하기 때문이다. 그리고 코드상에서도 어떤 리스트상에서 동작하고 있는 것인지 쉽게 알 수 있으므로 유지보수에도 용이할 것으로 보인다. C 언어는 언어 차원에서 클래스를 지원하지 않으므로 함수 포인터를 사용하여 구현해야 한다. 그러나 이러한 함수 포인터들도 초기에는 어떤 함수의 주소로 초기화되어야 한다. 따라서 초기화 함수가 필요하고, 제거 함수도 필요하다. 지금까지 설명한 것을 j_dll.h 헤더에 구성하면 다음과 같다.
  
 ```C
+#ifndef __J_DLL_H__
+#define __J_DLL_H__
+
+#include <stdint.h>
+
+#include "j_dllnode.h"
+
+/* user defined method length and indexes */
+#define J_DLLNODE_MTABLE_LEN 3
+enum j_dllnode_mtable_idx {
+    J_DLLNODE_READ = 00,
+    J_DLLNODE_UPDATE = 01,
+    J_DLLNODE_COMPARE = 02
+};
+
 /* list structure for intrusive double linked list */
 typedef struct _j_dll {
     struct j_dllnode *head, *tail;
@@ -161,8 +176,223 @@ typedef struct _j_dll {
     int (*create)(struct _j_dll *, void *);
     int (*delete)(struct _j_dll *, void *);
 } j_dll_t;
+
+enum j_dll_flags {
+    J_DLL_ERR_ALLOC = 1,	/* malloc error */
+    J_DLL_ERR_INVALID_METHOD = 2, /* NULL method */
+    J_DLL_ERR_INVALID_DLL = 4,	  /* NULL dll */
+    J_DLL_ERR_INVALID_DATA = 8,	  /* NULL data */
+    J_DLL_ERR_INVALID_NODE = 16 /* NULL node */
+};
+
+/* type define for user defined method */
+typedef int (*j_dllnode_method_t)(j_dll_t *, struct j_dllnode *, void *);
+
+extern j_dll_t *j_dll_init(j_dllnode_method_t read,
+			   j_dllnode_method_t update,
+			   j_dllnode_method_t compare,
+			   size_t data_offset);
+extern void j_dll_destroy(j_dll_t *dll);
+
+#endif
 ```
 
+위 헤더에서 에러 플래그는 아직 설명하지 않은 부분이지만, 다음 섹션에서 설명할 것이다.
+ 
+ 이제 클래스에서의 메서드와 그 구현부를 살펴보자. 리스트 클래스에서 메서드의 구현부는 외부에 드러날 필요가 없다. 즉, 구현부를 external linkage로 선언할 이유가 없다. 따라서 메서드의 구현부와 메서드가 호출하는 내부 함수의 구현부는 static linkage로 선언하였다. 그러나 초기화 함수와 제거 함수는 사용자가 직접 호출해야 하는 함수들이다. 따라서 이들은 외부에 드러날 필요가 있다. 그래서 이들은 external linkage로 선언하였다. 다만, 초기화 함수는 함수 포인터로 구현되는 메서드를 초기화하기 위해 메서드의 구현부를 알 수 있는 상태이어야 한다. 다시 말하면, 같은 파일에 있어야 하는 것이다. 또한 제거 함수도 내부 함수를 사용하므로 같은 파일에 있어야 한다. 지금까지 설명한 것을 j_dll.c에 작성하면 다음과 같다.
+ 
+```C
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
+#include "j_dll.h"
+#include "j_error.h"
+
+/* j_dll_is_empty: check the self is empty */
+static int j_dll_is_empty(j_dll_t *self)
+{
+    return (self->cnt == 0);
+}
+
+/* j_dll_is_full: check the self is full */
+static int j_dll_is_full(j_dll_t *self)
+{
+    return (self->cnt == SIZE_MAX);
+}
+
+/* j_dll_get_data: get the data from the node */
+static void *j_dll_get_data(j_dll_t *self, struct j_dllnode *node)
+{
+    if (node == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_NODE;
+	return NULL;
+    }
+    return ((char *) node - self->data_offset);
+}
+
+/* j_dll_get_node: get the node from the data */
+static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
+{
+    if (data == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
+	return NULL;
+    }
+    return (struct j_dllnode *) ((char *) data + self->data_offset);
+}
+
+/*
+ * prv_ functions are not complete. They are called by the caller and
+ * and have some assumptions that shall be satisfied.
+ */
+
+/* prv_j_dll_search_node: search the start that makes cmpres with data */
+static struct j_dllnode *prv_j_dll_search_node(j_dll_t *dll,
+					       struct j_dllnode *start,
+					       void *data,
+					       int cmpres)
+{
+...
+}
+
+/* j_dll_search: search the start that makes cmpres with data */
+static struct j_dllnode *j_dll_search(j_dll_t *self,
+				      void *data,
+				      int cmpres)
+{
+...
+}
+
+/* prv_j_dll_read_nodes: read the data and print it to the stdin or buf */
+static int prv_j_dll_read_nodes(j_dll_t *dll,
+			       struct j_dllnode *start,
+			       void *buf)
+{
+...
+}
+
+/*
+ * j_dll_read: read the data that the node is embedded and print it
+ * to the stdin or buf
+ */
+static int j_dll_read(j_dll_t *self, struct j_dllnode *node, void *buf)
+{
+...
+}
+
+/* prv_j_dll_insert_node_at_the_end: insert the target at the end of the dll */
+static void prv_j_dll_insert_node_at_the_end(j_dll_t *dll,
+					  struct j_dllnode *curr,
+					  struct j_dllnode *target)
+{
+...
+}
+
+/* prv_j_dll_insert_node: insert the target in front of the curr */
+static void prv_j_dll_insert_node(j_dll_t *dll,
+			       struct j_dllnode *curr,
+			       struct j_dllnode *target)
+{
+...
+}
+
+/* prv_j_dll_insert: insert the node to the dll */
+static void prv_j_dll_insert(j_dll_t *dll, struct j_dllnode *node)
+{
+...
+}
+
+/* j_dll_create: create the node in the self */
+static int j_dll_create(j_dll_t *self, void *data)
+{
+...
+}
+
+/* prv_j_dll_unlink_node: unlink the node from the dll */
+static void prv_j_dll_unlink_node(j_dll_t *dll, struct j_dllnode *node)
+{
+...
+}
+
+/* prv_j_dll_delete_node: delete the node from the dll */
+static void prv_j_dll_delete_node(j_dll_t *dll, struct j_dllnode *node)
+{
+...
+}
+
+/* j_dll_delete: delete the node that has corresponding data from the self */
+static int j_dll_delete(j_dll_t *self, void *data)
+{
+...
+}
+
+/* j_dll_update: update the data that has corresponding origin to new */
+static int j_dll_update(j_dll_t *self, void *origin, void *new)
+{
+...
+}
+
+/* j_dll_init: initialize dll */
+j_dll_t *j_dll_init(j_dllnode_method_t read,
+		    j_dllnode_method_t update,
+		    j_dllnode_method_t compare,
+		    size_t data_offset)
+{
+    j_dll_t *dll;
+
+    if (read == NULL || update == NULL || compare == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_METHOD;
+	return NULL;
+    }
+
+    if ((dll = malloc(sizeof(*dll))) == NULL) {
+	j_dll_errno = J_DLL_ERR_ALLOC;
+	return NULL;
+    }
+
+    dll->head = NULL;
+    dll->tail = NULL;
+    dll->cnt = 0;
+    dll->data_offset = data_offset;
+    dll->mt[J_DLLNODE_READ].method = read;
+    dll->mt[J_DLLNODE_UPDATE].method = update;
+    dll->mt[J_DLLNODE_COMPARE].method = compare;
+    dll->is_empty = j_dll_is_empty;
+    dll->is_full = j_dll_is_full;
+    dll->get_data = j_dll_get_data;
+    dll->get_node = j_dll_get_node;
+    dll->search = j_dll_search;
+    dll->read = j_dll_read;
+    dll->update = j_dll_update;
+    dll->create = j_dll_create;
+    dll->delete = j_dll_delete;
+    return dll;
+}
+
+/* j_dll_destroy: destroy dll */
+void j_dll_destroy(j_dll_t *dll)
+{
+    struct j_dllnode *target;
+
+    if (dll == NULL)
+	return ;
+    
+    if (dll->is_empty(dll)) {
+	free(dll);
+	return ;
+    }
+
+    target = dll->head;
+    while (target->next != NULL) {
+	target = target->next;
+	prv_j_dll_delete_node(dll, target->prev);
+    }
+    prv_j_dll_delete_node(dll, target);
+    free(dll);
+}
+```
+ 
 
 ## CRUD (Create, Read, Update, Delete)
  [1, Sec. 3.1]은 노드를 리스트에 추가할 때 정렬할 필요가 없다면, 리스트를 순회할 필요가 없는 방법을 선택하는 것이 가장 간단하다고 설명한다. 그리고 노드를 삭제할 때는 삭제할 노드를 찾기 위해서 함수가 필요하며, 리스트의 끝 (단일 연결 리스트에서는 맨 앞, 이중 연결 리스트에서는 맨 앞과 맨 끝) 노드를 삭제할 때의 경우를 특별히 다루어야 함을 설명한다. 여기서 노드를 찾는 함수는 재귀적으로 문제를 줄여 나가면서 (검색해야 하는 리스트의 크기를 줄이면서) 해결하는 방법을 선택하는데, 이 방법이 보다 간단한 리스트 연산을 만들고, 효율적인 분할 정복 (divide-and-conquer) 알고리즘으로 안내한다고 설명한다.
