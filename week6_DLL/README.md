@@ -616,6 +616,6 @@ static int j_dll_update(j_dll_t *self, void *origin, void *new)
 
 [4] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming Languages -- C", ISO/IEC, 1999
 
-[5] Allen Newell, J. C. Shaw, "Programming the Logic Theory Machin", Proceedings of the Western Joint Computer Conference, pp. 230-240, 1957
+[5] Allen Newell, J. C. Shaw, "Programming the Logic Theory Machine", Proceedings of the Western Joint Computer Conference, pp. 230-240, 1957
 
 [6] Prokash Sinha, "A Memory-Efficient Doubly Linked List", LINUX JOURNAL, 2004
