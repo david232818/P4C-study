@@ -20,7 +20,7 @@ Contents
 
 
 # 이중 연결 리스트
- 연결 리스트 (Linked List)라는 개념은 [5]가 제시한 개념으로, 문제의 증명을 기호 논리를 통해 찾는 프로그램인 Logical Theorist (LT)을 개발하는 과정에서 제안되었다. ([5]의 저자들은 이 논문이 카네기 공대의 H. A. Simon과 공동으로 진행한 연구 프로젝트의 일부임을 밝히고 있다) 해당 프로그램에 적용되는 여러 요구사항 (표현의 리스트를 다룰 수 있어야 하고, 논리 문제를 해결하기 위한 프로세스의 리스트를 다룰 수 있어야 한다는 것 등)을 해결하기 위해서는 한 언어가 필요했고 이것이 바로 IPL (Information Processing Language)이다. 즉, LT가 다룰 수 있어야 하는 리스트를 표현하기 위해 IPL이 사용된 것이다. 그리고 IPL은 리스트를 표현할 때 location words를 사용했는데, 이는 현대의 포인터와 같은 개념이라고 볼 수 있다. IPL은 리스트에 두 가지 location words를 두었는데, 하나는 element를 가리키고, 다른 하나는 다음 location words를 가리키도록 구성했다. 이를 그림으로 표현하면 다음과 같다.
+ 연결 리스트 (Linked List)라는 개념은 [5]가 제시한 개념으로, 문제의 증명을 기호 논리를 통해 찾는 프로그램인 Logical Theorist (LT)을 개발하는 과정에서 제안되었다. ([5]의 저자들은 이 논문이 카네기 공대의 H. A. Simon과 공동으로 진행한 연구 프로젝트의 일부임을 밝히고 있다) 해당 프로그램에 적용되는 여러 요구사항 (표현의 리스트를 다룰 수 있어야 하고, 논리 문제를 해결하기 위한 프로세스의 리스트를 다룰 수 있어야 한다는 것 등)을 해결하기 위해서는 한 언어가 필요했고 이것이 바로 Information Processing Language (IPL)이다. 즉, LT가 다룰 수 있어야 하는 리스트를 표현하기 위해 IPL이 사용된 것이다. 그리고 IPL은 리스트를 표현할 때 location words를 사용했는데, 이는 현대의 포인터와 같은 개념이라고 볼 수 있다. IPL은 리스트에 두 가지 location words를 두었는데, 하나는 element를 가리키고, 다른 하나는 다음 location words를 가리키도록 구성했다. 이를 그림으로 표현하면 다음과 같다.
  
 ```
     +--------+    +--------+    +--------+
@@ -115,9 +115,53 @@ static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 
 
 ## 노드를 연결하는 방법
+ 노드를 연결하는 방법에는 메모리 주소를 사용하는 방법도 있고, [6]이 제시하는 방법과 같이 XOR을 사용하는 방법 등이 있다. 여기서는 구현의 편의성을 위해 메모리 주소를 사용하여 노드를 연결한다.
 
 
-## 사용자 인터페이스: 객체지향 스타일
+## 사용자 인터페이스: 클래스
+ 여기서는 이중 연결 리스트와 관련된 변수, 함수를 하나의 구조체에 모아서 리스트 구조체를 다음과 같이 구성한다.
+ 
+```C
+/* list structure for intrusive double linked list */
+typedef struct _j_dll {
+    struct j_dllnode *head, *tail;
+    size_t cnt;
+
+    /*
+     * In intrusive double linked list, we need offset of the node
+     * structure to access the data from the node and the node from
+     * the data. And user shall provide this.
+     */
+    size_t data_offset;
+
+    /*
+     * User shall provide read, update, and compare methods. Since these will
+     * be applied to the all nodes in the dll, the dll structure should have
+     * the method table.
+     */
+    struct j_dllnode_mtable {
+	int (*method)(struct _j_dll *, struct j_dllnode *, void *);
+    } mt[J_DLLNODE_MTABLE_LEN];
+
+    int (*is_empty)(struct _j_dll *);
+    int (*is_full)(struct _j_dll *);
+    void *(*get_data)(struct _j_dll *, struct j_dllnode *);
+    struct j_dllnode *(*get_node)(struct _j_dll *, void *);
+
+    /*
+     * User shall decide the int type value for greater than, less than,
+     * and equal cases.
+     */
+    struct j_dllnode *(*search)(struct _j_dll *,
+				void *,
+				int);
+
+    int (*read)(struct _j_dll *, struct j_dllnode *, void *);
+    int (*update)(struct _j_dll *, void *, void *);
+    int (*create)(struct _j_dll *, void *);
+    int (*delete)(struct _j_dll *, void *);
+} j_dll_t;
+```
 
 
 ## CRUD (Create, Read, Update, Delete)
@@ -302,3 +346,5 @@ static int j_dll_delete(j_dll_t *self, void *data)
 [4] ISO/IEC JTC 1/SC 22/WG 14, "ISO/IEC 9899:1999, Programming Languages -- C", ISO/IEC, 1999
 
 [5] Allen Newell, J. C. Shaw, "Programming the Logic Theory Machin", Proceedings of the Western Joint Computer Conference, pp. 230-240, 1957
+
+[6] Prokash Sinha, "A Memory-Efficient Doubly Linked List", LINUX JOURNAL, 2004
