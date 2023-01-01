@@ -32,7 +32,7 @@ Contents
       element       element       element
 ```
 
-위 그림에서 -1은 리스트의 종료를 의미하며, 이는 현대의 NULL과 같은 개념이다.
+위 그림에서 -1은 리스트의 종료를 의미하며, 이는 현대의 NULL과 같은 개념이다. 따라서 [5]가 제시한 리스트의 형태는 [1, Sec. 3.1]이 설명하는 연결된 자료 구조 (Linked Data Structures)에 속하는 단일 연결 리스트 (Single Linked List)의 형태임을 알 수 있다.
 
  이중 연결 리스트 (Double Linked List)는 [1, Sec. 3.1]이 설명하는 연결된 자료 구조 (Linked Data Structures)에 속하는 단일 연결 리스트 (Single Linked List)에서 이전 노드를 가리키는 것이 추가된 자료구조이다. 이를 그림으로 표현하면 다음과 같다.
  
