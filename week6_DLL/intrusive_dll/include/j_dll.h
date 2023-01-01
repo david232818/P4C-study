@@ -40,8 +40,8 @@ typedef struct _j_dll {
     struct j_dllnode *(*get_node)(struct _j_dll *, void *);
 
     /*
-     * User shall decide the int type value for greater than, less than,
-     * and equal cases.
+     * User shall implement the compare method's return value as
+     * -1 (less than), 0 (equal), 1 (greater than).
      */
     struct j_dllnode *(*search)(struct _j_dll *,
 				void *,
