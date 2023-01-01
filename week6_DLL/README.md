@@ -9,8 +9,9 @@ Contents
 3. 구현
    1. 노드 구성: non-intrusive vs intrusive
    2. 노드를 연결하는 방법
-   3. 사용자 인터페이스: 객체지향 스타일
-   4. CRUD (Create, Read, Update, Delete)
+   3. 사용자 인터페이스: 클래스
+   4. 에러 처리
+   5. CRUD (Create, Read, Update, Delete)
 4. References
 
 
@@ -392,6 +393,21 @@ void j_dll_destroy(j_dll_t *dll)
     free(dll);
 }
 ```
+
+## 에러 처리
+ 리스트 연산에서 발생하는 에러는 대부분 전달된 인자의 값이 정상적이지 않은 경우이며, 인자의 대부분이 포인터이므로 그 값이 NULL인 경우가 된다. 이러한 에러에는 적절하지 못한 사용자 정의 메서드, 적절하지 못한 DLL, 적절하지 못한 데이터, 적절하지 못한 노드가 있다. 이들은 NULL에 대한 역참조 (dereference)를 발생시켜 시스템으로 하여금 세그멘테이션 폴트를 발생시키도록 만든다. 인자값 에러 이외에는 할당 에러가 있다. DLL을 초기화할 때 클래스 자체는 동적할당되므로 malloc 함수가 NULL을 반환할 때도 생각해야 하는 것이다. 상기에 설명한 에러 코드는 다음과 같이 enum을 사용하여 정의된다.
+ 
+```C
+enum j_dll_flags {
+    J_DLL_ERR_ALLOC = 1,	/* malloc error */
+    J_DLL_ERR_INVALID_METHOD = 2, /* NULL method */
+    J_DLL_ERR_INVALID_DLL = 4,	  /* NULL dll */
+    J_DLL_ERR_INVALID_DATA = 8,	  /* NULL data */
+    J_DLL_ERR_INVALID_NODE = 16 /* NULL node */
+};
+```
+ 
+ 지금까지 설명한 에러들을 처리하는 방법은 함수가 특정 에러값을 반환하도록 하고, 세부적인 에러 코드는 j_dll_errno라는 전역 변수에 저장하는 것이다. 여기서 특정 에러값은 반환 타입이 int라면 -1이고, 포인터라면 NULL이다. 이는 세부적인 에러 코드를 반환하는 것보다 에러 검사 코드를 간결하게 만들어준다는 장점이 있다.
  
 
 ## CRUD (Create, Read, Update, Delete)
