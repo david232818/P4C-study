@@ -25,7 +25,7 @@ static void *j_dll_get_data(j_dll_t *self, struct j_dllnode *node)
 	j_dll_errno = J_DLL_ERR_INVALID_NODE;
 	return NULL;
     }
-    return ((char *) node - self->data_offset);
+    return ((char *) node - self->node_offset);
 }
 
 /* j_dll_get_node: get the node from the data */
@@ -35,7 +35,7 @@ static struct j_dllnode *j_dll_get_node(j_dll_t *self, void *data)
 	j_dll_errno = J_DLL_ERR_INVALID_DATA;
 	return NULL;
     }
-    return (struct j_dllnode *) ((char *) data + self->data_offset);
+    return (struct j_dllnode *) ((char *) data + self->node_offset);
 }
 
 /*
@@ -234,7 +234,7 @@ static int j_dll_update(j_dll_t *self, void *origin, void *new)
 j_dll_t *j_dll_init(j_dllnode_method_t read,
 		    j_dllnode_method_t update,
 		    j_dllnode_method_t compare,
-		    size_t data_offset)
+		    size_t node_offset)
 {
     j_dll_t *dll;
 
@@ -251,7 +251,7 @@ j_dll_t *j_dll_init(j_dllnode_method_t read,
     dll->head = NULL;
     dll->tail = NULL;
     dll->cnt = 0;
-    dll->data_offset = data_offset;
+    dll->node_offset = node_offset;
     dll->mt[J_DLLNODE_READ].method = read;
     dll->mt[J_DLLNODE_UPDATE].method = update;
     dll->mt[J_DLLNODE_COMPARE].method = compare;

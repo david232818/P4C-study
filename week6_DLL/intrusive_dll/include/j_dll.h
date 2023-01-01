@@ -23,7 +23,7 @@ typedef struct _j_dll {
      * structure to access the data from the node and the node from
      * the data. And user shall provide this.
      */
-    size_t data_offset;
+    size_t node_offset;
 
     /*
      * User shall provide read, update, and compare methods. Since these will
@@ -67,7 +67,7 @@ typedef int (*j_dllnode_method_t)(j_dll_t *, struct j_dllnode *, void *);
 extern j_dll_t *j_dll_init(j_dllnode_method_t read,
 			   j_dllnode_method_t update,
 			   j_dllnode_method_t compare,
-			   size_t data_offset);
+			   size_t node_offset);
 extern void j_dll_destroy(j_dll_t *dll);
 
 #endif
