@@ -47,7 +47,7 @@ Contents
 
 
 # 구현 방식
- 여기서는 C 언어를 사용하여 이중 연결 리스트를 구현한다. 이때 노드를 어떻게 구성할 것인지, 노드를 어떻게 연결할지, CRUD를 어떻게 구현할지, 그리고 사용자가 이 라이브러리를 쓴다고 할 때 어떻게 인터페이스를 만들 것인지 고민해야 한다.
+ 여기서는 C 언어를 사용하여 이중 연결 리스트를 구현한다. 이때 노드 구성 방법, 노드 연결 방법, 리스트 라이브러리 인터페이스, 에러 처리, CRUD 구현에 대해 고민할 필요가 있다.
 
 
 ## 노드 구성: non-intrusive vs intrusive
@@ -165,8 +165,8 @@ typedef struct _j_dll {
     struct j_dllnode *(*get_node)(struct _j_dll *, void *);
 
     /*
-     * User shall decide the int type value for greater than, less than,
-     * and equal cases.
+     * User shall implement the compare method's return value as
+     * -1 (less than), 0 (equal), 1 (greater than).
      */
     struct j_dllnode *(*search)(struct _j_dll *,
 				void *,
