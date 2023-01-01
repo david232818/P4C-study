@@ -578,9 +578,34 @@ static int j_dll_delete(j_dll_t *self, void *data)
 노드를 삭제하는 함수는 삭제할 노드를 찾기 위해 검색 메서드를 사용한다. 그리고 노드 생성 함수에서와 같이 검색 메서드가 노드를 삭제하는 과정에서 유일하게 재귀적인 부분이다.
 
  마지막으로 노드의 데이터를 갱신하는 함수를 살펴보자.
- 
+
 ```C
+/* j_dll_update: update the data that has corresponding origin to new */
+static int j_dll_update(j_dll_t *self, void *origin, void *new)
+{
+    struct j_dllnode *target;
+    void *data;
+    
+    if (origin == NULL || new == NULL) {
+	j_dll_errno = J_DLL_ERR_INVALID_DATA;
+	return -1;
+    }
+
+    if ((target = self->search(self, origin, 0)) == NULL)
+	return -1;
+
+    prv_j_dll_unlink_node(self, target);
+    if (self->mt[J_DLLNODE_UPDATE].method(self, target, new) == -1) {
+	prv_j_dll_insert(self, target);
+	return -1;
+    }
+    prv_j_dll_insert(self, target);
+    return 0;
+}
 ```
+
+노드를 갱신하는 함수는 노드 삭제 함수가 삭제할 노드를 찾듯이, 갱신할 노드를 찾기 위해 검색 함수를 사용한다. 이때 노드의 연결을 잠시 끊어 놓는데, 이는 갱신 후에 다시 삽입하여 리스트의 정렬 일관성을 유지하기 위함이다.
+
 
 # References
 [1] Steven S. Skiena, "The Algorithm Design Manual", Springer, 2008
