@@ -4,20 +4,15 @@
 
 Contents
 --------
-1. 개요
-2. 이중 연결 리스트
-3. 구현
+1. 이중 연결 리스트
+2. 구현
    1. 노드 구성: non-intrusive vs intrusive
    2. 노드를 연결하는 방법
    3. 사용자 인터페이스: 클래스
    4. 에러 처리
    5. CRUD (Create, Read, Update, Delete)
-4. References
+3. References
 
-
-
-# 개요
- 빡공팟 6주차 과제는 C 언어를 사용하여 일반적인 (generic) 데이터를 저장할 수 있는 이중 연결 리스트를 구현하는 것이다.
 
 
 # 이중 연결 리스트
